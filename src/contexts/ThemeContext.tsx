@@ -36,8 +36,8 @@ const applyTheme = (theme: ThemePreset) => {
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [activeTheme, setActiveTheme] = useState('blue-default');
   const [activeTemplate, setActiveTemplate] = useState('classic');
-  const [platformName, setPlatformNameState] = useState('BM');
-  const [invoiceName, setInvoiceNameState] = useState('BM');
+  const [platformName, setPlatformNameState] = useState('she');
+  const [invoiceName, setInvoiceNameState] = useState('she');
 
   useEffect(() => {
     const fetchSettings = async () => {
