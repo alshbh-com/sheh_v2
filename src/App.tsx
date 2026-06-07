@@ -31,6 +31,7 @@ import Offices from "./pages/admin/Offices";
 import ModeratorStats from "./pages/admin/ModeratorStats";
 import BarcodeScanner from "./pages/admin/BarcodeScanner";
 import ManualInvoice from "./pages/admin/ManualInvoice";
+import ScannerInvoice from "./pages/admin/ScannerInvoice";
 import BottomNav from "./components/BottomNav";
 import TopNav from "./components/TopNav";
 import NotFound from "./pages/NotFound";
