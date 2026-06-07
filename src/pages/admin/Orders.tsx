@@ -341,18 +341,23 @@ const Orders = () => {
       
       const { data: ordersToAssign, error: fetchError } = await supabase
         .from("orders")
-        .select("id, governorate_id")
+        .select("id, governorate_id, shipping_cost")
         .in("order_number", orderNumbersAsStr);
       
       if (fetchError) throw fetchError;
       
-      // Assign each order with its own governorate shipping cost
+      // Assign each order with its own customer shipping cost (fallback: governorate)
       for (const orderToAssign of ordersToAssign) {
         let finalShippingCost = shippingCost;
-        if (shippingCost === 0 && orderToAssign.governorate_id) {
-          const gov = governorates?.find(g => g.id === orderToAssign.governorate_id);
-          if (gov) {
-            finalShippingCost = parseFloat(gov.shipping_cost?.toString() || "0");
+        if (shippingCost === 0) {
+          const orderShipping = parseFloat(orderToAssign.shipping_cost?.toString() || "0");
+          if (orderShipping > 0) {
+            finalShippingCost = orderShipping;
+          } else if (orderToAssign.governorate_id) {
+            const gov = governorates?.find(g => g.id === orderToAssign.governorate_id);
+            if (gov) {
+              finalShippingCost = parseFloat(gov.shipping_cost?.toString() || "0");
+            }
           }
         }
         
