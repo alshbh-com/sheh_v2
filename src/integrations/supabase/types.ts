@@ -1495,6 +1495,7 @@ export type Database = {
     Functions: {
       delete_old_activity_logs: { Args: never; Returns: undefined }
       normalize_order_code: { Args: { _value: string }; Returns: string }
+      preview_next_order_code: { Args: never; Returns: string }
       reserve_next_order_code: { Args: never; Returns: string }
       reset_order_sequence: { Args: never; Returns: undefined }
     }
