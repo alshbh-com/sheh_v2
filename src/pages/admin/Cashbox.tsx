@@ -296,11 +296,16 @@ const Cashbox = () => {
   };
 
   const openWithPassword = (action: "transaction" | "cashbox" | "delete", cashboxId?: string) => {
+    // Password requirement removed — access controlled via user permissions
     setPendingAction(action);
-    if (action === "delete" && cashboxId) {
-      setCashboxToDelete(cashboxId);
+    if (action === "transaction") {
+      setAddTransactionOpen(true);
+    } else if (action === "cashbox") {
+      setCreateCashboxOpen(true);
+    } else if (action === "delete" && cashboxId) {
+      deleteCashboxMutation.mutate(cashboxId);
     }
-    setPasswordDialogOpen(true);
+    setPendingAction(null);
   };
 
   const getReasonLabel = (reason: string) => {

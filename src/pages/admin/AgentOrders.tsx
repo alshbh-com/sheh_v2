@@ -2260,15 +2260,6 @@ const AgentOrders = () => {
                           <Select 
                             value={selectedCashboxId} 
                             onValueChange={(val) => {
-                              // Check if selected cashbox is today's
-                              const selectedBox = cashboxes?.find((c: any) => c.id === val);
-                              const isTodayBox = selectedBox?.name === getDailyCashboxName(todayCashboxDate);
-                              
-                              if (!isTodayBox && !nonTodayCashboxUnlocked) {
-                                // Require admin password
-                                setCashboxPasswordDialogOpen(true);
-                                return;
-                              }
                               setSelectedCashboxId(val);
                             }}
                           >

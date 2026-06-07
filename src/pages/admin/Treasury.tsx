@@ -157,59 +157,8 @@ const Treasury = () => {
     return <div className="p-8">جاري التحميل...</div>;
   }
 
-  // Password gate
-  if (!isUnlocked) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-accent/20 py-8">
-        <div className="container mx-auto px-4 max-w-md">
-          <Button onClick={() => navigate("/admin")} variant="ghost" className="mb-4">
-            <ArrowLeft className="ml-2 h-4 w-4" />
-            رجوع
-          </Button>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 justify-center">
-                <Wallet className="h-5 w-5" />
-                الخزانة
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-center text-muted-foreground">أدخل كلمة المرور للدخول</p>
-              <Input
-                type="password"
-                value={passwordInput}
-                onChange={(e) => setPasswordInput(e.target.value)}
-                placeholder="كلمة المرور"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    if (passwordInput === treasuryPassword) {
-                      setIsUnlocked(true);
-                      setPasswordInput("");
-                    } else {
-                      toast.error("كلمة المرور غير صحيحة");
-                    }
-                  }
-                }}
-              />
-              <Button 
-                className="w-full" 
-                onClick={() => {
-                  if (passwordInput === treasuryPassword) {
-                    setIsUnlocked(true);
-                    setPasswordInput("");
-                  } else {
-                    toast.error("كلمة المرور غير صحيحة");
-                  }
-                }}
-              >
-                دخول
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  // Password gate removed — access controlled via user permissions
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-accent/20 py-8">
