@@ -153,7 +153,8 @@ const ScannerInvoice = () => {
       setFinishOpen(false);
       navigate(`/admin/orders`);
     } catch (e: any) {
-      toast({ title: "خطأ", description: e.message, variant: "destructive" });
+      const isDup = e?.code === "23505" || String(e?.message || "").includes("duplicate_order_code");
+      toast({ title: "خطأ", description: isDup ? "حدث تعارض في رقم الفاتورة، حاول مرة أخرى." : e.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
