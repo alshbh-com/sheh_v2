@@ -616,20 +616,6 @@ const UserManagement = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Admin Password Dialog for Delete */}
-        <AdminPasswordDialog
-          open={adminDeleteDialogOpen}
-          onOpenChange={setAdminDeleteDialogOpen}
-          onConfirm={() => {
-            if (userToDelete) {
-              deleteUserMutation.mutate(userToDelete.id);
-              setUserToDelete(null);
-            }
-          }}
-          title="حذف المستخدم"
-          description={`لحذف المستخدم "${userToDelete?.username}" يجب إدخال كلمة المرور الإدارية`}
-          itemType="user_management"
-        />
       </div>
     </div>
   );
