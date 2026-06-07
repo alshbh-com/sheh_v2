@@ -239,8 +239,8 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
         </div>
       </div>
 
-      {/* Items table */}
-      <table className="w-full border-collapse text-[11px] mt-0">
+      {/* Items table — grows to fill remaining vertical space */}
+      <table className="w-full border-collapse text-[11px] mt-0 flex-1" style={{ height: "1px" }}>
         <thead>
           <tr className="font-bold text-center">
             <th className="border border-black p-1 w-[40px]">كود</th>
