@@ -21,7 +21,6 @@ const ManualInvoice = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
-  const [invoiceNumberTouched, setInvoiceNumberTouched] = useState(false);
   const [data, setData] = useState<InvoiceData>({
     invoiceNumber: "",
     date: todayStr(),
@@ -133,7 +132,7 @@ const ManualInvoice = () => {
       const shipping = Number(data.shipping) || 0;
       const total = subtotal + shipping;
 
-      const invoiceCode = invoiceNumberTouched ? data.invoiceNumber.trim() : "";
+      const invoiceCode = data.invoiceNumber.trim();
       const pageCode = (data.pageCode || "").trim();
       const codesToCheck = Array.from(new Set([invoiceCode, pageCode].filter(Boolean)));
       for (const code of codesToCheck) {
@@ -209,7 +208,6 @@ const ManualInvoice = () => {
         notes: "",
         shipping: 0, lines: [emptyLine(), emptyLine()],
       });
-      setInvoiceNumberTouched(false);
     } catch (e: any) {
       const isDuplicate = e?.code === "23505" || String(e?.message || "").includes("duplicate_order_code") || String(e?.message || "").includes("duplicate key");
       toast({ title: isDuplicate ? "رقم مكرر" : "خطأ في الحفظ", description: isDuplicate ? duplicateCodeMessage : e.message, variant: "destructive" });
@@ -244,10 +242,7 @@ const ManualInvoice = () => {
           <InvoiceTemplate
             data={data}
             editable
-            onChange={(next) => {
-              if (next.invoiceNumber !== data.invoiceNumber) setInvoiceNumberTouched(true);
-              setData(next);
-            }}
+            onChange={setData}
             onCodeBlur={handleCodeBlur}
           />
         </Card>
