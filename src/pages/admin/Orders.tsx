@@ -330,12 +330,14 @@ const Orders = () => {
 
   const assignByBarcodeMutation = useMutation({
     mutationFn: async ({ orderNumbers, agentId, shippingCost }: { orderNumbers: string[]; agentId: string; shippingCost: number }) => {
-      const orderNumbersAsInt = orderNumbers.map(n => parseInt(n, 10)).filter(n => !isNaN(n));
+      const orderNumbersAsStr = orderNumbers
+        .map(n => String(n).trim())
+        .filter(Boolean);
       
       const { data: ordersToAssign, error: fetchError } = await supabase
         .from("orders")
         .select("id, governorate_id")
-        .in("order_number", orderNumbersAsInt);
+        .in("order_number", orderNumbersAsStr);
       
       if (fetchError) throw fetchError;
       
