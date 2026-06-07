@@ -182,7 +182,7 @@ const ManualInvoice = () => {
         customerName: "", customerPhone: "", customerAddress: "",
         governorate: "", accountName: "", pageCode: "",
         notes: "",
-        shipping: 0, lines: [emptyLine()],
+        shipping: 0, lines: [emptyLine(), emptyLine()],
       });
     } catch (e: any) {
       toast({ title: "خطأ في الحفظ", description: e.message, variant: "destructive" });
