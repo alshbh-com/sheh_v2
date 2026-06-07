@@ -213,6 +213,7 @@ export const printInvoiceTemplate = async (
   body{font-family:Tahoma,Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .sheet{
     width:100%;
+    min-height:calc(210mm - 8mm);
     display:grid;
     gap:4mm;
     page-break-after:always;
@@ -221,8 +222,9 @@ export const printInvoiceTemplate = async (
   .sheet.copies-1{grid-template-columns:1fr;}
   .sheet.copies-2{grid-template-columns:1fr 1fr;}
   .sheet.copies-3{grid-template-columns:1fr 1fr 1fr;}
-  .cell{ width:100%; }
-  .invoice-sheet{width:100%;background:#fff;color:#000;}
+  .cell{ width:100%; min-height:calc(210mm - 8mm); display:flex; }
+  .invoice-sheet{width:100%;min-height:100%;display:flex;flex-direction:column;background:#fff;color:#000;}
+  .invoice-sheet table tbody tr{height:auto;}
 </style>
 </head><body>
 ${sheets}

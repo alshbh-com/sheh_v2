@@ -35,6 +35,11 @@ const statusColors: Record<string, string> = {
   return_no_shipping: "bg-red-500"
 };
 
+const getProductsAmount = (order: any) => {
+  const subtotal = parseFloat(order.subtotal?.toString() || "0");
+  return subtotal > 0 ? subtotal : parseFloat(order.total_amount?.toString() || "0");
+};
+
 const AgentOrders = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -433,7 +438,7 @@ const AgentOrders = () => {
 
     // إجمالي قيمة جميع الأوردرات المعروضة في اليوم (شامل شحن العميل)
     const allOrdersTotal = ordersToUse.reduce((sum, o) => {
-      const total = parseFloat(o.total_amount?.toString() || "0");
+      const total = getProductsAmount(o);
       const shipping = parseFloat(o.shipping_cost?.toString() || "0");
       return sum + total + shipping;
     }, 0);
@@ -447,7 +452,7 @@ const AgentOrders = () => {
     const allOrdersNet = allOrdersTotal - allAgentShipping;
 
     const shippedTotal = shippedOrders.reduce((sum, o) => {
-      const total = parseFloat(o.total_amount?.toString() || "0");
+      const total = getProductsAmount(o);
       const shipping = parseFloat(o.shipping_cost?.toString() || "0");
       return sum + total + shipping;
     }, 0);
@@ -459,7 +464,7 @@ const AgentOrders = () => {
     const shippedNet = shippedTotal - shippedAgentShipping;
 
     const deliveredTotal = deliveredOrders.reduce((sum, o) => {
-      const total = parseFloat(o.total_amount?.toString() || "0");
+      const total = getProductsAmount(o);
       const shipping = parseFloat(o.shipping_cost?.toString() || "0");
       return sum + total + shipping;
     }, 0);
@@ -930,7 +935,7 @@ const AgentOrders = () => {
 
       let updates: any = { status: status as any };
       
-      const totalAmount = parseFloat(order.total_amount?.toString() || "0");
+      const totalAmount = getProductsAmount(order);
       const customerShipping = parseFloat(order.shipping_cost?.toString() || "0");
       const agentShipping = parseFloat(order.agent_shipping_cost?.toString() || "0");
       const orderTotal = totalAmount + customerShipping;
@@ -1115,7 +1120,7 @@ const AgentOrders = () => {
 
       // Update agent's total_owed if agent was assigned
       if (order && order.delivery_agent_id) {
-        const owedAmount = parseFloat(order.total_amount?.toString() || "0") + 
+        const owedAmount = getProductsAmount(order) + 
                           parseFloat(order.shipping_cost?.toString() || "0") - 
                           parseFloat(order.agent_shipping_cost?.toString() || "0");
         
@@ -1269,7 +1274,7 @@ const AgentOrders = () => {
     const exportData = selectedOrdersData?.map(order => {
       const customerShipping = parseFloat(order.shipping_cost?.toString() || "0");
       const agentShipping = parseFloat(order.agent_shipping_cost?.toString() || "0");
-      const totalAmount = parseFloat(order.total_amount.toString());
+      const totalAmount = getProductsAmount(order);
       const totalPrice = totalAmount + customerShipping;
       const netAmount = totalPrice - agentShipping;
 
@@ -1326,7 +1331,7 @@ const AgentOrders = () => {
     selectedOrdersData?.forEach((order, i) => {
       const customerShipping = parseFloat(order.shipping_cost?.toString() || "0");
       const agentShipping = parseFloat(order.agent_shipping_cost?.toString() || "0");
-      const totalAmount = parseFloat(order.total_amount.toString());
+      const totalAmount = getProductsAmount(order);
       const totalPrice = totalAmount + customerShipping;
       const netAmount = totalPrice - agentShipping;
       
@@ -1369,7 +1374,7 @@ const AgentOrders = () => {
 
       const customerShipping = parseFloat(order.shipping_cost?.toString() || "0");
       const agentShipping = parseFloat(order.agent_shipping_cost?.toString() || "0");
-      const totalAmount = parseFloat(order.total_amount.toString());
+      const totalAmount = getProductsAmount(order);
       const discount = parseFloat(order.discount?.toString() || "0");
       const totalPrice = totalAmount + customerShipping;
       const netAmount = totalPrice - agentShipping;
@@ -1528,7 +1533,7 @@ const AgentOrders = () => {
 
     const customerShipping = parseFloat(order.shipping_cost?.toString() || "0");
     const agentShipping = parseFloat(order.agent_shipping_cost?.toString() || "0");
-    const totalAmount = parseFloat(order.total_amount.toString());
+    const totalAmount = getProductsAmount(order);
     const discount = parseFloat(order.discount?.toString() || "0");
     const totalPrice = totalAmount + customerShipping;
     const netAmount = totalPrice - agentShipping;
@@ -1862,7 +1867,7 @@ const AgentOrders = () => {
                       {filteredOrders.map((order) => {
                         const customerShipping = parseFloat(order.shipping_cost?.toString() || "0");
                         const agentShipping = parseFloat(order.agent_shipping_cost?.toString() || "0");
-                        const totalAmount = parseFloat(order.total_amount.toString());
+                        const totalAmount = getProductsAmount(order);
                         const totalPrice = totalAmount + customerShipping; // الإجمالي (ثابت)
                         const netAmount = totalPrice - agentShipping; // الصافي (المستحقات)
                         
@@ -2168,7 +2173,7 @@ const AgentOrders = () => {
                   <p>عدد الأوردرات: {filteredOrders.length}</p>
                   <p className="font-bold text-lg text-purple-600">
                     إجمالي الأوردرات: {filteredOrders.reduce((sum, order) => {
-                      const total = parseFloat(order.total_amount.toString());
+                      const total = getProductsAmount(order);
                       const customerShipping = parseFloat(order.shipping_cost?.toString() || "0");
                       return sum + (total + customerShipping);
                     }, 0).toFixed(2)} ج.م
@@ -2178,7 +2183,7 @@ const AgentOrders = () => {
                   </p>
                   <p className="font-bold text-xl text-green-600">
                     الصافي المطلوب من المندوب (من الأوردرات المعروضة): {filteredOrders.reduce((sum, order) => {
-                      const total = parseFloat(order.total_amount.toString());
+                      const total = getProductsAmount(order);
                       const customerShipping = parseFloat(order.shipping_cost?.toString() || "0");
                       const agentShipping = parseFloat(order.agent_shipping_cost?.toString() || "0");
                       return sum + (total + customerShipping - agentShipping);

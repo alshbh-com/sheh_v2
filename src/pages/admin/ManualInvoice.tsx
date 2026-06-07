@@ -130,7 +130,8 @@ const ManualInvoice = () => {
     try {
       const subtotal = items.reduce((s, l) => s + l.qty * l.price, 0);
       const shipping = Number(data.shipping) || 0;
-      const total = subtotal + shipping;
+      // Keep total_amount as products-only. Shipping is stored separately in shipping_cost
+      // and added once in order/agent reports.
 
       const invoiceCode = data.invoiceNumber.trim();
       const pageCode = (data.pageCode || "").trim();
@@ -161,7 +162,7 @@ const ManualInvoice = () => {
           notes: data.notes,
           subtotal,
           shipping_cost: shipping,
-          total_amount: total,
+          total_amount: subtotal,
           status: "pending",
           payment_status: "unpaid",
           source: "manual",

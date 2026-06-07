@@ -63,6 +63,11 @@ const Orders = () => {
     s.replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
      .replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)));
 
+  const getProductsAmount = (order: any) => {
+    const subtotal = parseFloat(order.subtotal?.toString() || "0");
+    return subtotal > 0 ? subtotal : parseFloat(order.total_amount?.toString() || "0");
+  };
+
   // Smart free-form parser - يحلل نص الأوردر بأي شكل
   const parseManualOrderText = (raw: string) => {
     if (!raw || !raw.trim()) return;
@@ -635,7 +640,7 @@ const Orders = () => {
     const selectedOrdersData = orders?.filter(o => selectedOrders.includes(o.id));
     
     const exportData = selectedOrdersData?.map(order => {
-      const totalAmount = parseFloat(order.total_amount?.toString() || "0");
+      const totalAmount = getProductsAmount(order);
       const discount = parseFloat(order.discount?.toString() || "0");
       const shippingCost = parseFloat(order.shipping_cost?.toString() || "0");
       const finalAmount = totalAmount + shippingCost;
@@ -990,7 +995,7 @@ const Orders = () => {
                   </TableHeader>
                   <TableBody>
                     {filteredOrders.map((order) => {
-                      const totalAmount = parseFloat(order.total_amount?.toString() || "0");
+                      const totalAmount = getProductsAmount(order);
                       const discount = parseFloat(order.discount?.toString() || "0");
                       const shippingCost = parseFloat(order.shipping_cost?.toString() || "0");
                       const finalAmount = totalAmount + shippingCost;
