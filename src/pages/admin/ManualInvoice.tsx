@@ -107,11 +107,13 @@ const ManualInvoice = () => {
   const isCodeTaken = async (code: string) => {
     const value = code.trim();
     if (!value) return false;
-    const checks = await Promise.all(
-      ["invoice_number", "order_number", "manual_code", "tracking_code"].map((column) =>
-        supabase.from("orders").select("id").eq(column as any, value).limit(1)
-      )
-    );
+    const ordersTable = supabase.from("orders") as any;
+    const checks = await Promise.all([
+      ordersTable.select("id").eq("invoice_number", value).limit(1),
+      ordersTable.select("id").eq("order_number", value).limit(1),
+      ordersTable.select("id").eq("manual_code", value).limit(1),
+      ordersTable.select("id").eq("tracking_code", value).limit(1),
+    ]);
     return checks.some(({ data: rows }) => rows && rows.length > 0);
   };
 
