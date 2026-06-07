@@ -191,30 +191,45 @@ export const printInvoiceTemplate = async (
   opts?: { markPrinted?: boolean; copies?: number }
 ) => {
   if (!orders?.length) return;
-  const copies = Math.max(1, opts?.copies || 1);
+  // الافتراضي: نسختين لكل أوردر — نسخة يمين ونسخة شمال على ورقة A4 أفقي
+  const copies = Math.max(1, opts?.copies || 2);
 
   const built = await Promise.all(orders.map(buildInvoice));
-  const allSheets: string[] = [];
-  built.forEach((html) => {
-    for (let i = 0; i < copies; i++) allSheets.push(html);
-  });
+
+  // كل أوردر = صفحة A4 أفقي بها (copies) نسخ بجانب بعضها
+  const sheets = built
+    .map((html) => {
+      const cells = Array.from({ length: copies }, () => `<div class="cell">${html}</div>`).join("");
+      return `<div class="sheet copies-${copies}">${cells}</div>`;
+    })
+    .join("");
 
   const html = `<!DOCTYPE html>
 <html dir="rtl"><head><meta charset="utf-8"><title>طباعة الفواتير</title>
 <style>
-  @page { size: A5 portrait; margin: 4mm; }
+  @page { size: A4 landscape; margin: 4mm; }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:#fff;color:#000}
   body{font-family:Tahoma,Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  .invoice-sheet{width:100%;page-break-after:always;background:#fff;color:#000;}
-  .invoice-sheet:last-child{page-break-after:auto;}
+  .sheet{
+    width:100%;
+    display:grid;
+    gap:4mm;
+    page-break-after:always;
+  }
+  .sheet:last-child{page-break-after:auto;}
+  .sheet.copies-1{grid-template-columns:1fr;}
+  .sheet.copies-2{grid-template-columns:1fr 1fr;}
+  .sheet.copies-3{grid-template-columns:1fr 1fr 1fr;}
+  .cell{ width:100%; }
+  .invoice-sheet{width:100%;background:#fff;color:#000;}
 </style>
 </head><body>
-${allSheets.join("")}
+${sheets}
 <script>setTimeout(()=>{window.print();},300);</script>
 </body></html>`;
 
-  const w = window.open("", "_blank", "width=900,height=900");
+  const w = window.open("", "_blank", "width=1200,height=900");
   if (!w) return;
   w.document.open();
   w.document.write(html);
@@ -225,3 +240,4 @@ ${allSheets.join("")}
     await supabase.from("orders").update({ is_printed: true } as any).in("id", ids);
   }
 };
+
