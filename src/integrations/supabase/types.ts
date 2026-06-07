@@ -1493,6 +1493,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_return_stock_delta: {
+        Args: { _items: Json; _sign: number }
+        Returns: undefined
+      }
       delete_old_activity_logs: { Args: never; Returns: undefined }
       normalize_order_code: { Args: { _value: string }; Returns: string }
       preview_next_order_code: { Args: never; Returns: string }
