@@ -111,6 +111,10 @@ const ManualInvoice = () => {
         .insert({
           invoice_number: data.invoiceNumber,
           order_number: data.invoiceNumber,
+          manual_code: data.pageCode || null,
+          tracking_code: data.pageCode || data.invoiceNumber,
+          account_name: data.accountName || null,
+          governorate: data.governorate || null,
           customer_name: data.customerName,
           customer_phone: data.customerPhone,
           customer_address: data.customerAddress,
@@ -152,7 +156,9 @@ const ManualInvoice = () => {
       setData({
         invoiceNumber: String((count || 0) + 1),
         date: todayStr(),
-        customerName: "", customerPhone: "", customerAddress: "", notes: "",
+        customerName: "", customerPhone: "", customerAddress: "",
+        governorate: "", accountName: "", pageCode: "",
+        notes: "",
         shipping: 0, lines: [emptyLine()],
       });
     } catch (e: any) {
