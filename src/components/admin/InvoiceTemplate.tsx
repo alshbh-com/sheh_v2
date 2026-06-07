@@ -141,8 +141,8 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
     <div
       id="invoice-print"
       dir="rtl"
-      className="invoice-sheet bg-white text-black mx-auto border border-black"
-      style={{ width: "148mm", minHeight: "210mm", padding: "4mm", fontFamily: "Tahoma, Arial, sans-serif" }}
+      className="invoice-sheet bg-white text-black mx-auto border border-black flex flex-col"
+      style={{ width: "148mm", height: "210mm", padding: "4mm", fontFamily: "Tahoma, Arial, sans-serif" }}
     >
       {/* Header social bar */}
       <div className="grid grid-cols-4 border border-black text-[11px] font-bold">
