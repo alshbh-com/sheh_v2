@@ -141,7 +141,7 @@ const buildInvoice = async (order: OrderLike) => {
       </div>
     </div>
 
-    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+    <table style="width:100%;border-collapse:collapse;font-size:11px;flex:1;height:1px;">
       <thead>
         <tr style="text-align:center;font-weight:bold;">
           <th style="border:1px solid #000;padding:3px;width:40px;">كود</th>

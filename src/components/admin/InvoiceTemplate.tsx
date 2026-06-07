@@ -141,8 +141,8 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
     <div
       id="invoice-print"
       dir="rtl"
-      className="invoice-sheet bg-white text-black mx-auto border border-black"
-      style={{ width: "148mm", minHeight: "210mm", padding: "4mm", fontFamily: "Tahoma, Arial, sans-serif" }}
+      className="invoice-sheet bg-white text-black mx-auto border border-black flex flex-col"
+      style={{ width: "148mm", height: "210mm", padding: "4mm", fontFamily: "Tahoma, Arial, sans-serif" }}
     >
       {/* Header social bar */}
       <div className="grid grid-cols-4 border border-black text-[11px] font-bold">
@@ -239,8 +239,8 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
         </div>
       </div>
 
-      {/* Items table */}
-      <table className="w-full border-collapse text-[11px] mt-0">
+      {/* Items table — grows to fill remaining vertical space */}
+      <table className="w-full border-collapse text-[11px] mt-0 flex-1" style={{ height: "1px" }}>
         <thead>
           <tr className="font-bold text-center">
             <th className="border border-black p-1 w-[40px]">كود</th>
