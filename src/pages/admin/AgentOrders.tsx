@@ -37,7 +37,7 @@ const statusColors: Record<string, string> = {
 
 const getProductsAmount = (order: any) => {
   const subtotal = parseFloat(order.subtotal?.toString() || "0");
-  return subtotal > 0 ? subtotal : getProductsAmount(order);
+  return subtotal > 0 ? subtotal : parseFloat(order.total_amount?.toString() || "0");
 };
 
 const AgentOrders = () => {
