@@ -17,22 +17,31 @@ import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import AdminPasswordDialog from '@/components/admin/AdminPasswordDialog';
 
 const PERMISSIONS = [
+  { id: 'dashboard', label: 'لوحة التحكم' },
   { id: 'orders', label: 'الأوردرات' },
+  { id: 'all_orders', label: 'كل الطلبات' },
+  { id: 'agent_orders', label: 'طلبات المندوب' },
+  { id: 'agent_payments', label: 'دفعات المندوب' },
   { id: 'products', label: 'المنتجات' },
   { id: 'categories', label: 'الأقسام' },
   { id: 'customers', label: 'العملاء' },
   { id: 'agents', label: 'المندوبين' },
-  { id: 'agent_orders', label: 'طلبات المندوب' },
-  { id: 'agent_payments', label: 'دفعات المندوب' },
   { id: 'governorates', label: 'المحافظات' },
   { id: 'statistics', label: 'الإحصائيات' },
+  { id: 'moderator_stats', label: 'إحصائيات المدريتور' },
   { id: 'invoices', label: 'الفواتير' },
-  { id: 'all_orders', label: 'كل الطلبات' },
-  { id: 'settings', label: 'الإعدادات' },
-  { id: 'reset_data', label: 'مسح البيانات' },
-  { id: 'user_management', label: 'إدارة المستخدمين' },
+  { id: 'manual_invoice', label: 'الفاتورة اليدوية' },
+  { id: 'scanner_invoice', label: 'فاتورة الماسح' },
+  { id: 'locked_invoices', label: 'الفواتير المقفلة' },
+  { id: 'barcode_scanner', label: 'الماسح الضوئي (Barcode)' },
   { id: 'cashbox', label: 'الخزنة' },
   { id: 'treasury', label: 'الخزانة (قديم)' },
+  { id: 'offices', label: 'المكاتب' },
+  { id: 'appearance', label: 'المظهر' },
+  { id: 'activity_logs', label: 'سجل النشاط' },
+  { id: 'settings', label: 'الإعدادات' },
+  { id: 'reset_data', label: 'إعادة تعيين البيانات' },
+  { id: 'user_management', label: 'إدارة المستخدمين' },
 ];
 
 interface PermissionSetting {
