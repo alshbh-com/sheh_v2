@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, Plus, ArrowLeft, Edit, Tag, X, Upload } from "lucide-react";
+import { Trash2, Plus, ArrowLeft, Edit, Tag, X, Upload, Printer } from "lucide-react";
+import { printProductLabel } from "@/lib/printProductLabel";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -700,26 +701,43 @@ const Products = () => {
                       <p className="text-sm text-muted-foreground mb-4">
                         الكمية: {product.stock}
                       </p>
-                      {canEditProducts && (
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         <Button
-                          variant="outline"
+                          variant="secondary"
                           size="sm"
                           className="flex-1"
-                          onClick={() => handleEdit(product)}
+                          onClick={() => printProductLabel({
+                            name: product.name,
+                            code: product.code || product.id.slice(0,6),
+                            barcode: product.barcode,
+                            price: product.price,
+                            showPrice: true,
+                          })}
                         >
-                          <Edit className="h-4 w-4 ml-1" />
-                          تعديل
+                          <Printer className="h-4 w-4 ml-1" />
+                          ملصق
                         </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => deleteMutation.mutate(product.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {canEditProducts && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => handleEdit(product)}
+                            >
+                              <Edit className="h-4 w-4 ml-1" />
+                              تعديل
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => deleteMutation.mutate(product.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
                       </div>
-                      )}
                     </CardContent>
                   </Card>
                 ))}

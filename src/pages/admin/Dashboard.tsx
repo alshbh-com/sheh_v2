@@ -35,6 +35,7 @@ const adminSections = [
   { title: "الأوردرات", description: "إدارة الطلبات", icon: ShoppingCart, path: "/admin/orders", color: "text-orange-500", permission: "orders" },
   { title: "فاتورة يدوية", description: "إنشاء فاتورة جديدة بنفس شكل الفاتورة المطبوعة", icon: FileText, path: "/admin/manual-invoice", color: "text-rose-500", permission: "orders" },
   { title: "قراءة الباركود", description: "اسكن الأوردرات بالمسدس ونفّذ أوامر جماعية", icon: ScanLine, path: "/admin/barcode-scanner", color: "text-primary", permission: "orders" },
+  { title: "فاتورة بالـ Scanner", description: "امسح المنتجات → فاتورة جديدة + تعيين مندوب", icon: ScanLine, path: "/admin/scanner-invoice", color: "text-fuchsia-500", permission: "orders" },
   { title: "أوردرات المندوب", description: "طلبات ومستحقات كل مندوب", icon: Package, path: "/admin/agent-orders", color: "text-purple-500", permission: "agent_orders" },
   { title: "الخزنة", description: "نظام الخزنة الآمن - لا حذف/تعديل", icon: Wallet, path: "/admin/cashbox", color: "text-emerald-500", permission: "cashbox" },
   { title: "المنتجات", description: "إدارة المنتجات والعروض", icon: Settings, path: "/admin/products", color: "text-red-500", permission: "products" },
