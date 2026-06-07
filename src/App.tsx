@@ -30,6 +30,7 @@ import Appearance from "./pages/admin/Appearance";
 import Offices from "./pages/admin/Offices";
 import ModeratorStats from "./pages/admin/ModeratorStats";
 import BarcodeScanner from "./pages/admin/BarcodeScanner";
+import ManualInvoice from "./pages/admin/ManualInvoice";
 import BottomNav from "./components/BottomNav";
 import TopNav from "./components/TopNav";
 import NotFound from "./pages/NotFound";
@@ -75,6 +76,7 @@ const App = () => (
                 <Route path="/admin/offices" element={<AdminRoute><Offices /></AdminRoute>} />
                 <Route path="/admin/moderator-stats" element={<AdminRoute><ModeratorStats /></AdminRoute>} />
                 <Route path="/admin/barcode-scanner" element={<AdminRoute><BarcodeScanner /></AdminRoute>} />
+                <Route path="/admin/manual-invoice" element={<AdminRoute><ManualInvoice /></AdminRoute>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

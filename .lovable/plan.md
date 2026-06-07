@@ -1,89 +1,106 @@
-## نظام قراءة الباركود + Barcode/QR للأوردرات
 
-سأبني نظامًا متكاملًا لقراءة الباركود مع Bulk Actions و Realtime، بالإضافة إلى توليد Barcode/QR لكل أوردر.
+# خطة إعادة بناء النظام
 
-### 1) تغييرات قاعدة البيانات (Migration)
+سأبني هذا على 4 مراحل بحيث كل مرحلة تشتغل لوحدها قبل ما ننتقل للي بعدها. ده شغل كبير جداً ومحتاج موافقتك على الخطة قبل البدء عشان مفيش حاجة تتعمل غلط.
 
-إضافات على `orders`:
-- `tracking_code` text unique — يُولَّد تلقائيًا (TRK-xxxxxx)
-- `barcode_value` text — نفس tracking_code افتراضيًا
-- `qr_value` text — payload JSON صغير (id + order_number + tracking)
-- Trigger BEFORE INSERT لتوليدهم تلقائيًا إن لم يُمرَّروا
+---
 
-جداول جديدة:
-- `scan_sessions`: started_by, started_by_username, started_at, ended_at, total_scanned, status (active/closed)
-- `scan_session_items`: session_id, order_id, scanned_at, scanned_code
-- `scan_logs`: session_id, order_id, action, old_status, new_status, user_id, username, payload jsonb, created_at
-- `order_status_history`: order_id, old_status, new_status, changed_by, changed_by_username, reason, created_at
+## المرحلة 1: شاشة الإضافة اليدوية (الفاتورة)
 
-كل الجداول: RLS مفتوح مثل باقي الجداول (anon+auth ALL=true)، مع indexes على `tracking_code`, `session_id`, `order_id`.
+**مسار جديد:** `/admin/manual-invoice` + زر في الـ Sidebar.
 
-Backfill: تعبئة tracking_code للأوردرات الموجودة.
-
-### 2) المكتبات
-`jsbarcode`, `qrcode`, `react-qr-code`, `html2canvas`, `jspdf`, `xlsx` (موجود غالبًا — سأتحقق)
-
-### 3) الكود — Frontend
+**تخطيط الشاشة مطابق للصورة (RTL Grid):**
 
 ```text
-src/
-├─ pages/BarcodeScannerPage.tsx          # الصفحة الرئيسية للقسم
-├─ features/scanner/
-│  ├─ components/
-│  │  ├─ ScannerInput.tsx                # input مخفي مركّز دائمًا، autofocus + onKeyDown Enter
-│  │  ├─ ScannedOrdersTable.tsx          # جدول live مع counter
-│  │  ├─ BulkActionsDialog.tsx           # نافذة الأوامر الجماعية
-│  │  ├─ StatusChangeDialog.tsx
-│  │  ├─ AssignAgentDialog.tsx
-│  │  ├─ BulkPrintInvoices.tsx
-│  │  ├─ BarcodeLabel.tsx                # ملصق باركود قابل للطباعة
-│  │  └─ QrLabel.tsx
-│  ├─ hooks/
-│  │  ├─ useScanSession.ts               # إنشاء/إغلاق session + إضافة عناصر
-│  │  ├─ useBarcodeScanner.ts            # التقاط مدخلات المسدس + debounce
-│  │  ├─ useScannedOrders.ts             # تخزين قائمة + منع تكرار
-│  │  ├─ useRealtimeOrders.ts            # اشتراك Supabase Realtime على orders
-│  │  └─ useBeep.ts                      # صوت نجاح/خطأ (WebAudio)
-│  ├─ lib/
-│  │  ├─ barcode.ts                      # generateTrackingCode + render JsBarcode
-│  │  ├─ exportPdf.ts
-│  │  ├─ exportExcel.ts
-│  │  └─ statusWorkflow.ts               # خرائط الحالات + الـ side effects
-│  └─ types.ts
-└─ App.tsx                               # route /barcode-scanner
+┌─────────────────────────────────────────────────────────┐
+│  sheH | Lina_factory_eg | she_h_ | she_h_eg  (روابط)   │
+├──────────────┬───────────────┬─────────────┬───────────┤
+│  فاتورة [##] │  التاريخ [##] │   QR Code   │           │
+├──────────────┴───────────────┴─────────────┤           │
+│  اسم المستلم [____]   رقم التليفون [____]              │
+│  العنوان    [_______________________]                   │
+├──────┬──────┬──────┬──────┬─────────────┬──────────────┤
+│ كود  │ مقاس │ عدد  │ لون  │    بيان     │   المجموع    │
+├──────┼──────┼──────┼──────┼─────────────┼──────────────┤
+│  10  │  L   │  2   │ أحمر │ اسم المنتج  │     1000     │
+│ ...  6 صفوف                                              │
+├──────────────────────┬─────────┬───────────────────────┤
+│   عدد القطع: [##]   │ المجموع │       [الإجمالي]      │
+│                      │  شحن   │       [قيمة]          │
+│                      │ الإجمالي│       [الإجمالي]     │
+├──────────────────────┴─────────┴───────────────────────┤
+│  ملاحظات: ........                                       │
+│  الاستبدال خلال 3 أيام بحد أقصى ولا يوجد استرجاع...     │
+│  سياسة الشحن: يتم دفع مصاريف الشحن في حالة الاستلام...  │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### 4) منطق الـ Scan
-1. ضغط "ابدأ الاسكان" → INSERT في `scan_sessions` (status=active) + تركيز Input.
-2. المسدس يكتب الكود + Enter → يبحث في `orders` عن `tracking_code` أو `order_number` أو `manual_code`.
-3. التحقق: غير ملغي/مسلم سابقًا، غير مكرر داخل الـ session → INSERT في `scan_session_items` + بيب نجاح.
-4. خطأ → بيب مختلف + Toast.
-5. زر "انتهيت" → يفتح BulkActionsDialog + يُغلق الـ session عند الخروج.
+**سلوك الإدخال:**
+- صف المنتج: لما تكتب الكود وتعمل Enter/Tab → النظام يبحث في جدول `products` بـ `code` أو `barcode` ويعبّي تلقائياً: اسم المنتج، اللون، المقاس، السعر.
+- العدد افتراضي = 1. المجموع = العدد × السعر (Live).
+- 6 صفوف ثابتة (نفس الصورة) + زر "+ صف إضافي" اختياري.
+- حقل **الشحن** يدوي. الإجمالي النهائي = مجموع السطور + الشحن (Live).
+- بحث المنتجات: index على `code` و`barcode` + Autocomplete سريع (debounced) عشان 1000+ منتج.
 
-### 5) Bulk Actions
-- تغيير الحالة (8 حالات) → UPDATE orders + INSERT order_status_history + scan_logs. حالة "تم التسليم" تستخدم منطق النظام الحالي (DB triggers الموجودة للـ financials — مذكورة في memory) لتجنب الـ double deduction.
-- تعيين/إزالة مندوب → يحترم memory: revert إلى pending يمسح agent.
-- طباعة فواتير جماعية → نافذة طباعة A4 4-up (متوافقة مع memory الفاتورة الحالية).
-- تصدير PDF (jsPDF) + Excel (xlsx).
-- حذف من القائمة (محلي فقط).
+**الحفظ:**
+- زر "حفظ" → ينشئ صف في `orders` + صفوف في `order_items` (نفس الـ schema الحالي).
+- زر "حفظ وطباعة" → يحفظ ثم يفتح شاشة الطباعة.
 
-### 6) Realtime
-`supabase.channel('orders-realtime').on('postgres_changes', {event:'*', table:'orders'})` لتحديث الجدول فورًا، ومثله لـ `scan_session_items` للجلسات المتعددة.
+---
 
-### 7) Barcode/QR في الفاتورة
-- إضافة `<BarcodeLabel value={order.tracking_code}/>` و `<QrLabel/>` داخل قالب الفاتورة الحالي.
-- صفحة طباعة ملصقات Barcode جماعية مستقلة.
+## المرحلة 2: قالب طباعة الفاتورة
 
-### 8) UI
-- صفحة RTL، dark mode aware (يستخدم design tokens من index.css).
-- زر CTA كبير + Counter متحرك (framer-motion خفيف) + Toast (sonner الموجود).
-- جدول live مع أعمدة: #، رقم الأوردر، العميل، المندوب، الحالة (Badge ملون)، المبلغ، المدينة، إجراء (حذف).
+- مكوّن `<InvoicePrint />` مطابق 1:1 لتصميم الصورة (نفس الجدول، نفس الـ Headers، نفس النصوص في الأسفل).
+- **فاتورة واحدة فقط في الصفحة** (مش اتنين زي الصورة).
+- `@media print` بصفحة A5 portrait أو A4 (هتختار) وإخفاء كل الـ chrome.
+- البيانات تتسحب من قاعدة البيانات بالـ id.
+- الـ Header يستخدم `app_settings.logo_url` + الروابط (sheH, Lina_factory_eg, ...إلخ) من `app_settings.settings` JSON.
+- QR Code يحتوي على رقم الفاتورة (مكتبة `qrcode.react`).
 
-### 9) الأمان والصلاحيات
-- التحقق من admin_user permission `scanner.access` (سأضيفها كصلاحية اختيارية، الـ owner لديه الكل).
+---
 
-### نقطة مهمة قبل البدء
-- بعض الجداول التي تطلبها (`courier_daily_reports`) موجودة بمنطق مماثل بالفعل كـ `agent_daily_closings`. سأستخدم الموجود بدلًا من تكرار، وأكتفي بإضافة `order_status_history` و `scan_*`.
-- لو أردتني فعليًا إنشاء `courier_daily_reports` كجدول مستقل قل لي وسأضيفه.
+## المرحلة 3: إدارة المنتجات + الباركود + الملصقات
 
-بعد موافقتك سأنفذ على دفعتين: (1) Migration، ثم (2) الكود الكامل.
+داخل `/admin/products`:
+- نموذج الإضافة/التعديل يحتوي: اسم، كود، باركود، سعر، لون، مقاس، صورة.
+- التحقق من تفرّد `code` و `barcode` (Unique constraints في DB).
+- زر "توليد باركود تلقائي" (EAN-13 من الكود).
+- زر "طباعة ملصق" لكل منتج + اختيار متعدد للطباعة بالجملة.
+- الملصق يحتوي: اسم المنتج، الكود، الباركود (مكتبة `jsbarcode`)، السعر (toggle).
+- صفحة طباعة ملصقات بحجم 50×30mm قابلة للتكرار.
+
+**تغييرات DB:**
+- `ALTER TABLE products ADD CONSTRAINT products_code_unique UNIQUE (code)`
+- `ALTER TABLE products ADD CONSTRAINT products_barcode_unique UNIQUE (barcode)` (نسمح بـ NULL).
+
+---
+
+## المرحلة 4: تطوير الـ Scanner بوضعين
+
+في `/admin/barcode-scanner`:
+- Toggle أعلى الشاشة: **[وضع الأوردرات] | [وضع المنتجات]**.
+
+**وضع الأوردرات** (السلوك الحالي): scan لباركود أوردر → يفتح الأوردر.
+
+**وضع المنتجات** (جديد):
+- كل scan لباركود منتج → يضيف المنتج لقائمة الفاتورة الحالية (إذا موجود زوّد الكمية).
+- جدول live يعرض المنتجات المُسكانة + الكمية + المجموع.
+- زر **"انتهيت"** → يفتح Dialog يطلب: اسم العميل، الهاتف، العنوان، الشحن، **اختيار المندوب** (Dropdown من `delivery_agents`).
+- عند الحفظ → ينشئ Order + Order_items + يعيّن المندوب + يعرض زر طباعة الفاتورة.
+
+---
+
+## ملاحظات تقنية
+
+- كل العمليات على Supabase مباشرة (نفس الجداول الموجودة).
+- البحث السريع: استخدام `ilike` مع index + كاش على client لـ 1000 منتج (نجيبهم مرة واحدة عند فتح الشاشة، البحث يكون in-memory).
+- كل الألوان من الـ design tokens (HSL في `index.css`).
+
+---
+
+## السؤال قبل ما أبدأ
+
+1. **حجم ورقة الطباعة:** A4 ولا A5؟ (الصورة شكلها A5 أنسب لفاتورة واحدة).
+2. هل أبدأ بالمراحل الأربعة بالترتيب وأقولك خلصت كل مرحلة، ولا أنفّذهم كلهم في رسالة واحدة طويلة؟
+
+لو موافق على الخطة قول **"موافق"** وحدّد إجابة السؤالين، وأبدأ على طول.

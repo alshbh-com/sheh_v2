@@ -96,3 +96,19 @@
     direction: rtl;
   }
 }
+
+/* Manual Invoice print styles */
+@media print {
+  @page { size: A5 portrait; margin: 0; }
+  body { background: #fff !important; }
+  .no-print { display: none !important; }
+  body * { visibility: hidden; }
+  #invoice-print, #invoice-print * { visibility: visible; }
+  #invoice-print {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    margin: 0 auto;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
