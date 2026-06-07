@@ -123,7 +123,7 @@ const ScannerInvoice = () => {
           notes: form.notes,
           subtotal,
           shipping_cost: shipping,
-          total_amount: total,
+          total_amount: subtotal,
           status: form.agent_id ? "processing" : "pending",
           payment_status: "unpaid",
           source: "scanner",
