@@ -29,6 +29,7 @@ const Products = () => {
     barcode: "",
     description: "",
     price: "",
+    purchase_price: "",
     offer_price: "",
     stock: "",
     is_offer: false,
