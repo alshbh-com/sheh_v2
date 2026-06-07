@@ -271,7 +271,7 @@ const Invoices = () => {
   const handlePrint = async () => {
     const ordersToPrint = filteredOrders?.filter(o => selectedOrders.includes(o.id));
     if (!ordersToPrint?.length) return;
-    await printMpInvoices(ordersToPrint as any, { markPrinted: true });
+    await printInvoiceTemplate(ordersToPrint as any, { markPrinted: true, copies: printCopies });
     setSelectedOrders([]);
     queryClient.invalidateQueries({ queryKey: ["orders-for-invoices"] });
     queryClient.invalidateQueries({ queryKey: ["locked-invoices"] });
