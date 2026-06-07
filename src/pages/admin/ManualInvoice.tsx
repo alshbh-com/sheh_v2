@@ -140,12 +140,18 @@ const ManualInvoice = () => {
       });
       await supabase.from("order_items").insert(itemRows);
 
-      toast({ title: "تم حفظ الفاتورة بنجاح" });
+      toast({ title: "تم حفظ الفاتورة بنجاح", description: `رقم الفاتورة: ${data.invoiceNumber}` });
       if (thenPrint) {
         setTimeout(() => window.print(), 200);
-      } else {
-        navigate("/admin/orders");
       }
+      // ابقَ على نفس الصفحة — جهّز فاتورة جديدة فارغة
+      const { count } = await supabase.from("orders").select("*", { count: "exact", head: true });
+      setData({
+        invoiceNumber: String((count || 0) + 1),
+        date: todayStr(),
+        customerName: "", customerPhone: "", customerAddress: "", notes: "",
+        shipping: 0, lines: [emptyLine()],
+      });
     } catch (e: any) {
       toast({ title: "خطأ في الحفظ", description: e.message, variant: "destructive" });
     } finally {
