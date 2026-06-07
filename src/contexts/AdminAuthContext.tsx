@@ -150,8 +150,9 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   // Check if user has permission (with optional type check)
   const hasPermission = (permission: string, type?: 'view' | 'edit'): boolean => {
     if (!currentUser) return false;
-    
-    // Check for the specific permission only
+    // Owner role bypasses all permission checks
+    if (currentUser.role === 'owner') return true;
+
     const userPerm = currentUser.permissions.find(p => p.permission === permission);
     if (!userPerm) return false;
 
