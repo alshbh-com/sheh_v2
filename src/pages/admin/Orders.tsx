@@ -562,7 +562,8 @@ const Orders = () => {
     },
     onError: (error: any) => {
       console.error("Error creating order:", error);
-      toast.error(`حدث خطأ: ${error?.message || "خطأ غير معروف"}`);
+      const isDuplicateCode = error?.code === "23505" || String(error?.message || "").includes("duplicate_order_code") || String(error?.message || "").includes("duplicate key");
+      toast.error(isDuplicateCode ? "الكود مستخدم قبل كده، اكتب كود مختلف" : `حدث خطأ: ${error?.message || "خطأ غير معروف"}`);
     }
   });
 
