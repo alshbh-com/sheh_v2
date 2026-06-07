@@ -296,11 +296,16 @@ const Orders = () => {
         const order = orders?.find(o => o.id === orderId);
         let finalShippingCost = shippingCost;
         
-        // Always use governorate shipping cost if available and user didn't specify
-        if (shippingCost === 0 && order?.governorate_id) {
-          const gov = governorates?.find(g => g.id === order.governorate_id);
-          if (gov) {
-            finalShippingCost = parseFloat(gov.shipping_cost?.toString() || "0");
+        // Default agent_shipping_cost to the order's customer shipping (from the manual invoice)
+        if (shippingCost === 0) {
+          const orderShipping = parseFloat(order?.shipping_cost?.toString() || "0");
+          if (orderShipping > 0) {
+            finalShippingCost = orderShipping;
+          } else if (order?.governorate_id) {
+            const gov = governorates?.find(g => g.id === order.governorate_id);
+            if (gov) {
+              finalShippingCost = parseFloat(gov.shipping_cost?.toString() || "0");
+            }
           }
         }
         
