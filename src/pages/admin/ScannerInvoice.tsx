@@ -113,13 +113,10 @@ const ScannerInvoice = () => {
     }
     setSaving(true);
     try {
-      const { count } = await supabase.from("orders").select("*", { count: "exact", head: true });
-      const invoiceNumber = String((count || 0) + 1);
       const { data: order, error } = await supabase
         .from("orders")
         .insert({
-          invoice_number: invoiceNumber,
-          order_number: invoiceNumber,
+          // Let the DB trigger assign a unique order/invoice number to avoid duplicate-code errors
           customer_name: form.customer_name,
           customer_phone: form.customer_phone,
           customer_address: form.customer_address,
