@@ -653,7 +653,7 @@ export type Database = {
           product_code: string | null
           product_details: Json | null
           product_id: string | null
-          product_name: string
+          product_name: string | null
           quantity: number
           size: string | null
           total_price: number
@@ -671,7 +671,7 @@ export type Database = {
           product_code?: string | null
           product_details?: Json | null
           product_id?: string | null
-          product_name: string
+          product_name?: string | null
           quantity?: number
           size?: string | null
           total_price?: number
@@ -689,7 +689,7 @@ export type Database = {
           product_code?: string | null
           product_details?: Json | null
           product_id?: string | null
-          product_name?: string
+          product_name?: string | null
           quantity?: number
           size?: string | null
           total_price?: number
@@ -758,19 +758,21 @@ export type Database = {
           created_by_username: string | null
           customer_address: string | null
           customer_id: string | null
-          customer_name: string
-          customer_phone: string
+          customer_name: string | null
+          customer_phone: string | null
           delivered_at: string | null
           delivery_agent_id: string | null
           discount: number
           governorate: string | null
           governorate_id: string | null
           id: string
-          invoice_number: string
+          invoice_number: string | null
           is_printed: boolean
           locked_at: string | null
           manual_code: string | null
+          manual_order_date: string | null
           metadata: Json
+          modified_amount: number | null
           notes: string | null
           office_id: string | null
           order_details: string | null
@@ -798,19 +800,21 @@ export type Database = {
           created_by_username?: string | null
           customer_address?: string | null
           customer_id?: string | null
-          customer_name: string
-          customer_phone: string
+          customer_name?: string | null
+          customer_phone?: string | null
           delivered_at?: string | null
           delivery_agent_id?: string | null
           discount?: number
           governorate?: string | null
           governorate_id?: string | null
           id?: string
-          invoice_number: string
+          invoice_number?: string | null
           is_printed?: boolean
           locked_at?: string | null
           manual_code?: string | null
+          manual_order_date?: string | null
           metadata?: Json
+          modified_amount?: number | null
           notes?: string | null
           office_id?: string | null
           order_details?: string | null
@@ -838,19 +842,21 @@ export type Database = {
           created_by_username?: string | null
           customer_address?: string | null
           customer_id?: string | null
-          customer_name?: string
-          customer_phone?: string
+          customer_name?: string | null
+          customer_phone?: string | null
           delivered_at?: string | null
           delivery_agent_id?: string | null
           discount?: number
           governorate?: string | null
           governorate_id?: string | null
           id?: string
-          invoice_number?: string
+          invoice_number?: string | null
           is_printed?: boolean
           locked_at?: string | null
           manual_code?: string | null
+          manual_order_date?: string | null
           metadata?: Json
+          modified_amount?: number | null
           notes?: string | null
           office_id?: string | null
           order_details?: string | null
@@ -1088,6 +1094,7 @@ export type Database = {
           customer_phone: string | null
           delivery_agent_id: string | null
           id: string
+          notes: string | null
           order_id: string | null
           order_item_id: string | null
           product_id: string | null
@@ -1109,6 +1116,7 @@ export type Database = {
           customer_phone?: string | null
           delivery_agent_id?: string | null
           id?: string
+          notes?: string | null
           order_id?: string | null
           order_item_id?: string | null
           product_id?: string | null
@@ -1130,6 +1138,7 @@ export type Database = {
           customer_phone?: string | null
           delivery_agent_id?: string | null
           id?: string
+          notes?: string | null
           order_id?: string | null
           order_item_id?: string | null
           product_id?: string | null
@@ -1405,8 +1414,8 @@ export type Database = {
           is_active: boolean
           label: string | null
           password: string | null
-          password_type: string
-          password_value: string
+          password_type: string | null
+          password_value: string | null
           updated_at: string
         }
         Insert: {
@@ -1415,8 +1424,8 @@ export type Database = {
           is_active?: boolean
           label?: string | null
           password?: string | null
-          password_type: string
-          password_value: string
+          password_type?: string | null
+          password_value?: string | null
           updated_at?: string
         }
         Update: {
@@ -1425,8 +1434,8 @@ export type Database = {
           is_active?: boolean
           label?: string | null
           password?: string | null
-          password_type?: string
-          password_value?: string
+          password_type?: string | null
+          password_value?: string | null
           updated_at?: string
         }
         Relationships: []
