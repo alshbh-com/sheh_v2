@@ -1,6 +1,6 @@
 export interface ScannedOrder {
   id: string;
-  order_number: number;
+  order_number: string;
   tracking_code: string | null;
   customer_name: string | null;
   customer_phone: string | null;
