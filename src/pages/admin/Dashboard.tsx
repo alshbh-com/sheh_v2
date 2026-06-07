@@ -33,6 +33,7 @@ const adminSections = [
   { title: "العملاء", description: "إدارة بيانات العملاء", icon: Users, path: "/admin/customers", color: "text-blue-500", permission: "customers" },
   { title: "بيانات المندوبين", description: "إدارة المندوبين", icon: Truck, path: "/admin/agents", color: "text-green-500", permission: "agents" },
   { title: "الأوردرات", description: "إدارة الطلبات", icon: ShoppingCart, path: "/admin/orders", color: "text-orange-500", permission: "orders" },
+  { title: "فاتورة يدوية", description: "إنشاء فاتورة جديدة بنفس شكل الفاتورة المطبوعة", icon: FileText, path: "/admin/manual-invoice", color: "text-rose-500", permission: "orders" },
   { title: "قراءة الباركود", description: "اسكن الأوردرات بالمسدس ونفّذ أوامر جماعية", icon: ScanLine, path: "/admin/barcode-scanner", color: "text-primary", permission: "orders" },
   { title: "أوردرات المندوب", description: "طلبات ومستحقات كل مندوب", icon: Package, path: "/admin/agent-orders", color: "text-purple-500", permission: "agent_orders" },
   { title: "الخزنة", description: "نظام الخزنة الآمن - لا حذف/تعديل", icon: Wallet, path: "/admin/cashbox", color: "text-emerald-500", permission: "cashbox" },
