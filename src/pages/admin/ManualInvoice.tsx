@@ -29,8 +29,9 @@ const ManualInvoice = () => {
     pageCode: "",
     notes: "",
     shipping: 0,
-    lines: [emptyLine()],
+    lines: [emptyLine(), emptyLine()],
   });
+
 
   // Load all products once for fast in-memory lookup (1000+ supported)
   useEffect(() => {
@@ -82,10 +83,10 @@ const ManualInvoice = () => {
         price: Number(p.sale_price || p.price || 0),
         qty: cur.qty || 1,
       };
-      // auto-add next empty row
-      if (rowIndex === lines.length - 1 && lines.length < 6) lines.push(emptyLine());
+      // لا نضيف صفوف تلقائياً — المستخدم يضيف/يحذف يدوياً بزر + / −
       return { ...d, lines };
     });
+
   };
 
   const filledLines = () => data.lines.filter((l) => l.code && l.qty > 0);
@@ -105,6 +106,27 @@ const ManualInvoice = () => {
       const subtotal = items.reduce((s, l) => s + l.qty * l.price, 0);
       const shipping = Number(data.shipping) || 0;
       const total = subtotal + shipping;
+
+      // التحقق من أن رقم الباركود (كود الصفحة أو رقم الفاتورة) فريد ولم يُستخدم من قبل
+      const barcodeVal = (data.pageCode || data.invoiceNumber || "").trim();
+      if (barcodeVal) {
+        const { data: dup } = await supabase
+          .from("orders")
+          .select("id")
+          .or(
+            `invoice_number.eq.${barcodeVal},order_number.eq.${barcodeVal},manual_code.eq.${barcodeVal},tracking_code.eq.${barcodeVal}`
+          )
+          .limit(1);
+        if (dup && dup.length > 0) {
+          toast({
+            title: "رقم مكرر",
+            description: `الرقم ${barcodeVal} مستخدم من قبل في فاتورة أخرى. غيّر رقم الفاتورة أو كود الصفحة.`,
+            variant: "destructive",
+          });
+          setSaving(false);
+          return;
+        }
+      }
 
       const { data: order, error } = await supabase
         .from("orders")
@@ -129,6 +151,7 @@ const ManualInvoice = () => {
         .select()
         .single();
       if (error) throw error;
+
 
       const itemRows = items.map((l) => {
         const p = productIndex.byCode.get(String(l.code).trim().toLowerCase());
@@ -159,7 +182,7 @@ const ManualInvoice = () => {
         customerName: "", customerPhone: "", customerAddress: "",
         governorate: "", accountName: "", pageCode: "",
         notes: "",
-        shipping: 0, lines: [emptyLine()],
+        shipping: 0, lines: [emptyLine(), emptyLine()],
       });
     } catch (e: any) {
       toast({ title: "خطأ في الحفظ", description: e.message, variant: "destructive" });

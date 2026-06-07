@@ -83,8 +83,15 @@ const POLICY_LINES = [
 export default function InvoiceTemplate({ data, editable = false, onChange, onCodeBlur }: Props) {
   const barcodeRef = useRef<SVGSVGElement>(null);
 
-  const lines = [...data.lines];
-  while (lines.length < ROW_COUNT) lines.push({ code: "", name: "", color: "", size: "", qty: 0, price: 0 });
+  // في وضع التحرير نعرض بالضبط الصفوف الموجودة (يضيف/يحذف المستخدم يدوياً).
+  // في وضع المعاينة/الطباعة نُكمّل حتى ROW_COUNT.
+  const lines = editable
+    ? [...data.lines]
+    : (() => {
+        const arr = [...data.lines];
+        while (arr.length < ROW_COUNT) arr.push({ code: "", name: "", color: "", size: "", qty: 0, price: 0 });
+        return arr;
+      })();
 
   const subtotal = lines.reduce((s, l) => s + (l.qty || 0) * (l.price || 0), 0);
   const totalQty = lines.reduce((s, l) => s + (l.qty || 0), 0);
@@ -116,7 +123,15 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
   const updateLine = (idx: number, patch: Partial<InvoiceLine>) => {
     const next = [...lines];
     next[idx] = { ...next[idx], ...patch };
-    onChange?.({ ...data, lines: next.slice(0, ROW_COUNT) });
+    onChange?.({ ...data, lines: next });
+  };
+  const addLine = () => {
+    onChange?.({ ...data, lines: [...data.lines, { code: "", name: "", color: "", size: "", qty: 1, price: 0 }] });
+  };
+  const removeLine = (idx: number) => {
+    const next = [...data.lines];
+    next.splice(idx, 1);
+    onChange?.({ ...data, lines: next.length ? next : [{ code: "", name: "", color: "", size: "", qty: 1, price: 0 }] });
   };
 
   const inputCls =
@@ -234,6 +249,7 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
             <th className="border border-black p-1 w-[44px]">اللون</th>
             <th className="border border-black p-1">بيان</th>
             <th className="border border-black p-1 w-[70px]">المجموع</th>
+            {editable && <th className="border border-black p-1 w-[44px] no-print">⚙</th>}
           </tr>
         </thead>
         <tbody>
@@ -275,6 +291,26 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
                 <td className="border border-black p-0.5 font-semibold">
                   {line.qty > 0 ? lineTotal.toFixed(0) : ""}
                 </td>
+                {editable && (
+                  <td className="border border-black p-0.5 no-print">
+                    <div className="flex items-center justify-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => removeLine(idx)}
+                        className="w-5 h-5 rounded bg-red-500 text-white text-xs leading-none hover:bg-red-600"
+                        title="حذف الصف"
+                      >−</button>
+                      {idx === lines.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={addLine}
+                          className="w-5 h-5 rounded bg-green-600 text-white text-xs leading-none hover:bg-green-700"
+                          title="إضافة صف"
+                        >+</button>
+                      )}
+                    </div>
+                  </td>
+                )}
               </tr>
             );
           })}
@@ -285,6 +321,7 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
             <td className="border border-black p-1 text-center font-bold" colSpan={2}>{totalQty}</td>
             <td className="border border-black p-1 text-center font-bold">المجموع</td>
             <td className="border border-black p-1 text-center font-bold">{subtotal.toFixed(0)}</td>
+            {editable && <td className="border border-black no-print"></td>}
           </tr>
           <tr>
             <td className="border border-black p-1" colSpan={4}></td>
@@ -294,13 +331,16 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
                 <input type="number" className={`${inputCls} font-bold`} value={data.shipping || ""} onChange={(e) => update({ shipping: parseFloat(e.target.value) || 0 })} placeholder="0" />
               ) : ((data.shipping || 0).toFixed(0))}
             </td>
+            {editable && <td className="border border-black no-print"></td>}
           </tr>
           <tr>
             <td className="border border-black p-1 text-center font-bold text-[13px]" colSpan={5}>الاجمالى</td>
             <td className="border border-black p-1 text-center font-bold text-[13px]">{total.toFixed(0)}</td>
+            {editable && <td className="border border-black no-print"></td>}
           </tr>
         </tfoot>
       </table>
+
 
       {/* Notes */}
       <div className="grid grid-cols-[80px_1fr] border-x border-b border-black text-[11px]">
