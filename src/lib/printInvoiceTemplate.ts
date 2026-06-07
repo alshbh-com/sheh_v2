@@ -1,6 +1,5 @@
 // Print one or many orders using the same invoice layout as InvoiceTemplate.tsx
 import { supabase } from "@/integrations/supabase/client";
-import QRCode from "qrcode";
 
 type OrderLike = any;
 
@@ -48,12 +47,24 @@ const extractItems = (order: OrderLike) => {
   });
 };
 
+const buildBarcodeSvg = async (value: string) => {
+  const JsBarcode = (await import("jsbarcode")).default;
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  try {
+    JsBarcode(svg, value || "0", { format: "CODE128", height: 50, width: 1.4, fontSize: 11, margin: 0, displayValue: true });
+  } catch {}
+  return new XMLSerializer().serializeToString(svg);
+};
+
 const buildInvoice = async (order: OrderLike) => {
-  const invoiceNumber = order.manual_code || order.order_number || order.id.slice(0, 8);
+  const invoiceNumber = order.invoice_number || order.order_number || order.id.slice(0, 8);
   const date = formatDate(order.created_at);
   const customerName = order.customers?.name || order.customer_name || "";
   const customerPhone = order.customers?.phone || order.customer_phone || "";
   const customerAddress = order.customers?.address || order.customer_address || "";
+  const governorate = order.governorate || order.customers?.governorate || "";
+  const accountName = order.account_name || "";
+  const pageCode = order.manual_code || "";
   const notes = order.notes || "";
   const shipping = Number(order.shipping_cost || 0);
 
@@ -65,8 +76,8 @@ const buildInvoice = async (order: OrderLike) => {
   const totalQty = lines.reduce((s, l) => s + (l.qty || 0), 0);
   const total = subtotal + shipping;
 
-  let qrDataUrl = "";
-  try { qrDataUrl = await QRCode.toDataURL(String(invoiceNumber), { width: 90, margin: 0 }); } catch {}
+  const barcodeValue = pageCode || order.tracking_code || String(invoiceNumber);
+  const barcodeSvg = await buildBarcodeSvg(barcodeValue);
 
   const headerCells = HEADER_LINKS.map((l, i) => `
     <div style="display:flex;align-items:center;justify-content:center;gap:3px;padding:2px;${i < 3 ? "border-left:1px solid #000;" : ""}">
@@ -92,7 +103,7 @@ const buildInvoice = async (order: OrderLike) => {
       ${headerCells}
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 90px;border:1px solid #000;border-top:0;">
+    <div style="display:grid;grid-template-columns:1fr 110px;border:1px solid #000;border-top:0;">
       <div>
         <div style="display:grid;grid-template-columns:70px 1fr 70px 1fr;border-bottom:1px solid #000;">
           <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;">فاتورة</div>
@@ -106,13 +117,23 @@ const buildInvoice = async (order: OrderLike) => {
           <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;">رقم التليفون</div>
           <div style="padding:3px;text-align:center;">${esc(customerPhone)}</div>
         </div>
-        <div style="display:grid;grid-template-columns:80px 1fr;min-height:40px;">
+        <div style="display:grid;grid-template-columns:80px 1fr 80px 1fr;border-bottom:1px solid #000;">
+          <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;">المحافظة</div>
+          <div style="border-left:1px solid #000;padding:3px;text-align:center;">${esc(governorate)}</div>
+          <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;">كود الصفحة</div>
+          <div style="padding:3px;text-align:center;">${esc(pageCode)}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:80px 1fr;border-bottom:1px solid #000;">
+          <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;">اسم الحساب</div>
+          <div style="padding:3px;text-align:center;">${esc(accountName)}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:80px 1fr;min-height:36px;">
           <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;display:flex;align-items:center;justify-content:center;">عنوان :</div>
           <div style="padding:3px;text-align:center;">${esc(customerAddress)}</div>
         </div>
       </div>
-      <div style="border-right:1px solid #000;display:flex;align-items:center;justify-content:center;padding:2px;">
-        ${qrDataUrl ? `<img src="${qrDataUrl}" style="width:80px;height:80px;" />` : ""}
+      <div style="border-right:1px solid #000;display:flex;align-items:center;justify-content:center;padding:3px;">
+        <div style="width:100%;">${barcodeSvg}</div>
       </div>
     </div>
 
@@ -169,7 +190,6 @@ export const printInvoiceTemplate = async (
   const copies = Math.max(1, opts?.copies || 1);
 
   const built = await Promise.all(orders.map(buildInvoice));
-  // duplicate per copies
   const allSheets: string[] = [];
   built.forEach((html) => {
     for (let i = 0; i < copies; i++) allSheets.push(html);
