@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { printMpInvoices } from "@/lib/printMpInvoices";
+import { printInvoiceTemplate } from "@/lib/printInvoiceTemplate";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -271,7 +271,7 @@ const Invoices = () => {
   const handlePrint = async () => {
     const ordersToPrint = filteredOrders?.filter(o => selectedOrders.includes(o.id));
     if (!ordersToPrint?.length) return;
-    await printMpInvoices(ordersToPrint as any, { markPrinted: true });
+    await printInvoiceTemplate(ordersToPrint as any, { markPrinted: true, copies: printCopies });
     setSelectedOrders([]);
     queryClient.invalidateQueries({ queryKey: ["orders-for-invoices"] });
     queryClient.invalidateQueries({ queryKey: ["locked-invoices"] });
