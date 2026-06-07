@@ -35,6 +35,11 @@ const statusColors: Record<string, string> = {
   return_no_shipping: "bg-red-500"
 };
 
+const getProductsAmount = (order: any) => {
+  const subtotal = parseFloat(order.subtotal?.toString() || "0");
+  return subtotal > 0 ? subtotal : parseFloat(order.total_amount?.toString() || "0");
+};
+
 const AgentOrders = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
