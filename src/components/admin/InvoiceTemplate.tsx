@@ -83,8 +83,15 @@ const POLICY_LINES = [
 export default function InvoiceTemplate({ data, editable = false, onChange, onCodeBlur }: Props) {
   const barcodeRef = useRef<SVGSVGElement>(null);
 
-  const lines = [...data.lines];
-  while (lines.length < ROW_COUNT) lines.push({ code: "", name: "", color: "", size: "", qty: 0, price: 0 });
+  // في وضع التحرير نعرض بالضبط الصفوف الموجودة (يضيف/يحذف المستخدم يدوياً).
+  // في وضع المعاينة/الطباعة نُكمّل حتى ROW_COUNT.
+  const lines = editable
+    ? [...data.lines]
+    : (() => {
+        const arr = [...data.lines];
+        while (arr.length < ROW_COUNT) arr.push({ code: "", name: "", color: "", size: "", qty: 0, price: 0 });
+        return arr;
+      })();
 
   const subtotal = lines.reduce((s, l) => s + (l.qty || 0) * (l.price || 0), 0);
   const totalQty = lines.reduce((s, l) => s + (l.qty || 0), 0);
@@ -116,7 +123,15 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
   const updateLine = (idx: number, patch: Partial<InvoiceLine>) => {
     const next = [...lines];
     next[idx] = { ...next[idx], ...patch };
-    onChange?.({ ...data, lines: next.slice(0, ROW_COUNT) });
+    onChange?.({ ...data, lines: next });
+  };
+  const addLine = () => {
+    onChange?.({ ...data, lines: [...data.lines, { code: "", name: "", color: "", size: "", qty: 1, price: 0 }] });
+  };
+  const removeLine = (idx: number) => {
+    const next = [...data.lines];
+    next.splice(idx, 1);
+    onChange?.({ ...data, lines: next.length ? next : [{ code: "", name: "", color: "", size: "", qty: 1, price: 0 }] });
   };
 
   const inputCls =
