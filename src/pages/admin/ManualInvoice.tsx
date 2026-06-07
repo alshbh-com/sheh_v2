@@ -83,10 +83,10 @@ const ManualInvoice = () => {
         price: Number(p.sale_price || p.price || 0),
         qty: cur.qty || 1,
       };
-      // auto-add next empty row
-      if (rowIndex === lines.length - 1 && lines.length < 6) lines.push(emptyLine());
+      // لا نضيف صفوف تلقائياً — المستخدم يضيف/يحذف يدوياً بزر + / −
       return { ...d, lines };
     });
+
   };
 
   const filledLines = () => data.lines.filter((l) => l.code && l.qty > 0);
