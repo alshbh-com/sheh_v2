@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import QRCode from "qrcode";
 
 export type InvoiceLine = {
   code: string;
@@ -16,6 +15,9 @@ export type InvoiceData = {
   customerName: string;
   customerPhone: string;
   customerAddress: string;
+  governorate?: string;
+  accountName?: string;
+  pageCode?: string; // كود الصفحة (يستخدم في الباركود)
   notes: string;
   shipping: number;
   lines: InvoiceLine[];
@@ -43,7 +45,7 @@ const POLICY_LINES = [
 ];
 
 export default function InvoiceTemplate({ data, editable = false, onChange, onCodeBlur }: Props) {
-  const qrRef = useRef<HTMLCanvasElement>(null);
+  const barcodeRef = useRef<SVGSVGElement>(null);
 
   const lines = [...data.lines];
   while (lines.length < ROW_COUNT) lines.push({ code: "", name: "", color: "", size: "", qty: 0, price: 0 });
@@ -52,11 +54,27 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
   const totalQty = lines.reduce((s, l) => s + (l.qty || 0), 0);
   const total = subtotal + (Number(data.shipping) || 0);
 
+  const barcodeValue = (data.pageCode || data.invoiceNumber || "0").toString();
+
   useEffect(() => {
-    if (qrRef.current && data.invoiceNumber) {
-      QRCode.toCanvas(qrRef.current, data.invoiceNumber || "0", { width: 90, margin: 0 });
-    }
-  }, [data.invoiceNumber]);
+    let cancelled = false;
+    (async () => {
+      if (!barcodeRef.current) return;
+      const JsBarcode = (await import("jsbarcode")).default;
+      if (cancelled || !barcodeRef.current) return;
+      try {
+        JsBarcode(barcodeRef.current, barcodeValue, {
+          format: "CODE128",
+          height: 50,
+          width: 1.4,
+          fontSize: 11,
+          margin: 0,
+          displayValue: true,
+        });
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [barcodeValue]);
 
   const update = (patch: Partial<InvoiceData>) => onChange?.({ ...data, ...patch });
   const updateLine = (idx: number, patch: Partial<InvoiceLine>) => {
@@ -87,19 +105,14 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
         ))}
       </div>
 
-      {/* Invoice no / date + QR */}
-      <div className="grid grid-cols-[1fr_90px] border-x border-b border-black">
+      {/* Invoice no / date + Barcode */}
+      <div className="grid grid-cols-[1fr_110px] border-x border-b border-black">
         <div>
           <div className="grid grid-cols-[70px_1fr_70px_1fr] items-stretch border-b border-black">
             <div className="border-l border-black p-1 text-center font-bold text-[12px]">فاتورة</div>
             <div className="border-l border-black p-1">
               {editable ? (
-                <input
-                  className={inputCls}
-                  value={data.invoiceNumber}
-                  onChange={(e) => update({ invoiceNumber: e.target.value })}
-                  placeholder="0"
-                />
+                <input className={inputCls} value={data.invoiceNumber} onChange={(e) => update({ invoiceNumber: e.target.value })} placeholder="0" />
               ) : (
                 <div className="text-center">{data.invoiceNumber || "0"}</div>
               )}
@@ -107,11 +120,7 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
             <div className="border-l border-black p-1 text-center font-bold text-[12px]">التاريخ</div>
             <div className="p-1">
               {editable ? (
-                <input
-                  className={inputCls}
-                  value={data.date}
-                  onChange={(e) => update({ date: e.target.value })}
-                />
+                <input className={inputCls} value={data.date} onChange={(e) => update({ date: e.target.value })} />
               ) : (
                 <div className="text-center">{data.date}</div>
               )}
@@ -135,25 +144,49 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
               )}
             </div>
           </div>
-          <div className="grid grid-cols-[80px_1fr] min-h-[44px]">
+          <div className="grid grid-cols-[80px_1fr_80px_1fr] border-b border-black">
+            <div className="border-l border-black p-1 text-center font-bold text-[12px]">المحافظة</div>
+            <div className="border-l border-black p-1">
+              {editable ? (
+                <input className={inputCls} value={data.governorate || ""} onChange={(e) => update({ governorate: e.target.value })} />
+              ) : (
+                <div className="text-center">{data.governorate || ""}</div>
+              )}
+            </div>
+            <div className="border-l border-black p-1 text-center font-bold text-[12px]">كود الصفحة</div>
+            <div className="p-1">
+              {editable ? (
+                <input className={inputCls} value={data.pageCode || ""} onChange={(e) => update({ pageCode: e.target.value })} placeholder="(اختياري)" />
+              ) : (
+                <div className="text-center">{data.pageCode || ""}</div>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-[80px_1fr] border-b border-black">
+            <div className="border-l border-black p-1 text-center font-bold text-[12px]">اسم الحساب</div>
+            <div className="p-1">
+              {editable ? (
+                <input className={inputCls} value={data.accountName || ""} onChange={(e) => update({ accountName: e.target.value })} placeholder="(اختياري)" />
+              ) : (
+                <div className="text-center">{data.accountName || ""}</div>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-[80px_1fr] min-h-[40px]">
             <div className="border-l border-black p-1 text-center font-bold text-[12px] flex items-center justify-center">
               عنوان :
             </div>
             <div className="p-1">
               {editable ? (
-                <textarea
-                  className={`${inputCls} resize-none h-full min-h-[42px]`}
-                  value={data.customerAddress}
-                  onChange={(e) => update({ customerAddress: e.target.value })}
-                />
+                <textarea className={`${inputCls} resize-none h-full min-h-[36px]`} value={data.customerAddress} onChange={(e) => update({ customerAddress: e.target.value })} />
               ) : (
                 <div className="text-center">{data.customerAddress}</div>
               )}
             </div>
           </div>
         </div>
-        <div className="border-r border-black flex items-center justify-center">
-          <canvas ref={qrRef} />
+        <div className="border-r border-black flex items-center justify-center p-1">
+          <svg ref={barcodeRef} style={{ width: "100%", height: "100%" }} />
         </div>
       </div>
 
@@ -181,50 +214,29 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
                       value={line.code}
                       onChange={(e) => updateLine(idx, { code: e.target.value })}
                       onBlur={(e) => onCodeBlur?.(idx, e.target.value.trim())}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                      }}
+                      onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
                     />
-                  ) : (
-                    line.code || "0"
-                  )}
+                  ) : (line.code || "0")}
                 </td>
                 <td className="border border-black p-0.5">
                   {editable ? (
                     <input className={inputCls} value={line.size} onChange={(e) => updateLine(idx, { size: e.target.value })} />
-                  ) : (
-                    line.size || "0"
-                  )}
+                  ) : (line.size || "0")}
                 </td>
                 <td className="border border-black p-0.5">
                   {editable ? (
-                    <input
-                      type="number"
-                      className={inputCls}
-                      value={line.qty || ""}
-                      onChange={(e) => updateLine(idx, { qty: parseInt(e.target.value) || 0 })}
-                    />
-                  ) : (
-                    line.qty || 0
-                  )}
+                    <input type="number" className={inputCls} value={line.qty || ""} onChange={(e) => updateLine(idx, { qty: parseInt(e.target.value) || 0 })} />
+                  ) : (line.qty || 0)}
                 </td>
                 <td className="border border-black p-0.5">
                   {editable ? (
                     <input className={inputCls} value={line.color} onChange={(e) => updateLine(idx, { color: e.target.value })} />
-                  ) : (
-                    line.color || "."
-                  )}
+                  ) : (line.color || ".")}
                 </td>
                 <td className="border border-black p-0.5 text-right">
                   {editable ? (
-                    <input
-                      className={`${inputCls} text-right`}
-                      value={line.name}
-                      onChange={(e) => updateLine(idx, { name: e.target.value })}
-                    />
-                  ) : (
-                    line.name
-                  )}
+                    <input className={`${inputCls} text-right`} value={line.name} onChange={(e) => updateLine(idx, { name: e.target.value })} />
+                  ) : (line.name)}
                 </td>
                 <td className="border border-black p-0.5 font-semibold">
                   {line.qty > 0 ? lineTotal.toFixed(0) : ""}
@@ -235,12 +247,8 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
         </tbody>
         <tfoot className="text-[11px]">
           <tr>
-            <td className="border border-black p-1 text-center font-bold" colSpan={2}>
-              عدد القطع
-            </td>
-            <td className="border border-black p-1 text-center font-bold" colSpan={2}>
-              {totalQty}
-            </td>
+            <td className="border border-black p-1 text-center font-bold" colSpan={2}>عدد القطع</td>
+            <td className="border border-black p-1 text-center font-bold" colSpan={2}>{totalQty}</td>
             <td className="border border-black p-1 text-center font-bold">المجموع</td>
             <td className="border border-black p-1 text-center font-bold">{subtotal.toFixed(0)}</td>
           </tr>
@@ -249,22 +257,12 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
             <td className="border border-black p-1 text-center font-bold">شحن</td>
             <td className="border border-black p-1 text-center font-bold">
               {editable ? (
-                <input
-                  type="number"
-                  className={`${inputCls} font-bold`}
-                  value={data.shipping || ""}
-                  onChange={(e) => update({ shipping: parseFloat(e.target.value) || 0 })}
-                  placeholder="0"
-                />
-              ) : (
-                (data.shipping || 0).toFixed(0)
-              )}
+                <input type="number" className={`${inputCls} font-bold`} value={data.shipping || ""} onChange={(e) => update({ shipping: parseFloat(e.target.value) || 0 })} placeholder="0" />
+              ) : ((data.shipping || 0).toFixed(0))}
             </td>
           </tr>
           <tr>
-            <td className="border border-black p-1 text-center font-bold text-[13px]" colSpan={5}>
-              الاجمالى
-            </td>
+            <td className="border border-black p-1 text-center font-bold text-[13px]" colSpan={5}>الاجمالى</td>
             <td className="border border-black p-1 text-center font-bold text-[13px]">{total.toFixed(0)}</td>
           </tr>
         </tfoot>
@@ -276,9 +274,7 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
         <div className="p-1 min-h-[24px] text-center">
           {editable ? (
             <input className={inputCls} value={data.notes} onChange={(e) => update({ notes: e.target.value })} />
-          ) : (
-            data.notes
-          )}
+          ) : (data.notes)}
         </div>
       </div>
       <div className="border-x border-b border-black p-1 text-center text-[11px] font-semibold">
