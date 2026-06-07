@@ -107,6 +107,27 @@ const ManualInvoice = () => {
       const shipping = Number(data.shipping) || 0;
       const total = subtotal + shipping;
 
+      // التحقق من أن رقم الباركود (كود الصفحة أو رقم الفاتورة) فريد ولم يُستخدم من قبل
+      const barcodeVal = (data.pageCode || data.invoiceNumber || "").trim();
+      if (barcodeVal) {
+        const { data: dup } = await supabase
+          .from("orders")
+          .select("id")
+          .or(
+            `invoice_number.eq.${barcodeVal},order_number.eq.${barcodeVal},manual_code.eq.${barcodeVal},tracking_code.eq.${barcodeVal}`
+          )
+          .limit(1);
+        if (dup && dup.length > 0) {
+          toast({
+            title: "رقم مكرر",
+            description: `الرقم ${barcodeVal} مستخدم من قبل في فاتورة أخرى. غيّر رقم الفاتورة أو كود الصفحة.`,
+            variant: "destructive",
+          });
+          setSaving(false);
+          return;
+        }
+      }
+
       const { data: order, error } = await supabase
         .from("orders")
         .insert({
@@ -130,6 +151,7 @@ const ManualInvoice = () => {
         .select()
         .single();
       if (error) throw error;
+
 
       const itemRows = items.map((l) => {
         const p = productIndex.byCode.get(String(l.code).trim().toLowerCase());
