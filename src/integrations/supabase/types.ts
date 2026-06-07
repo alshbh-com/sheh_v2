@@ -146,6 +146,39 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_daily_closings: {
+        Row: {
+          closed_by: string | null
+          closed_by_username: string | null
+          closing_date: string
+          created_at: string
+          delivery_agent_id: string | null
+          id: string
+          net_amount: number
+          notes: string | null
+        }
+        Insert: {
+          closed_by?: string | null
+          closed_by_username?: string | null
+          closing_date?: string
+          created_at?: string
+          delivery_agent_id?: string | null
+          id?: string
+          net_amount?: number
+          notes?: string | null
+        }
+        Update: {
+          closed_by?: string | null
+          closed_by_username?: string | null
+          closing_date?: string
+          created_at?: string
+          delivery_agent_id?: string | null
+          id?: string
+          net_amount?: number
+          notes?: string | null
+        }
+        Relationships: []
+      }
       agent_payments: {
         Row: {
           agent_id: string | null
@@ -153,11 +186,13 @@ export type Database = {
           amount: number
           created_at: string
           created_by: string | null
+          delivery_agent_id: string | null
           id: string
           notes: string | null
           order_id: string | null
           payment_date: string
           payment_method: string
+          payment_type: string | null
           updated_at: string
         }
         Insert: {
@@ -166,11 +201,13 @@ export type Database = {
           amount?: number
           created_at?: string
           created_by?: string | null
+          delivery_agent_id?: string | null
           id?: string
           notes?: string | null
           order_id?: string | null
           payment_date?: string
           payment_method?: string
+          payment_type?: string | null
           updated_at?: string
         }
         Update: {
@@ -179,11 +216,13 @@ export type Database = {
           amount?: number
           created_at?: string
           created_by?: string | null
+          delivery_agent_id?: string | null
           id?: string
           notes?: string | null
           order_id?: string | null
           payment_date?: string
           payment_method?: string
+          payment_type?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -424,6 +463,7 @@ export type Database = {
           name: string
           notes: string | null
           phone: string
+          phone2: string | null
           secondary_phone: string | null
           total_orders: number
           total_spent: number
@@ -439,6 +479,7 @@ export type Database = {
           name: string
           notes?: string | null
           phone: string
+          phone2?: string | null
           secondary_phone?: string | null
           total_orders?: number
           total_spent?: number
@@ -454,6 +495,7 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string
+          phone2?: string | null
           secondary_phone?: string | null
           total_orders?: number
           total_spent?: number
@@ -473,6 +515,9 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
+          serial_number: string | null
+          total_owed: number
+          total_paid: number
           updated_at: string
         }
         Insert: {
@@ -486,6 +531,9 @@ export type Database = {
           name: string
           notes?: string | null
           phone?: string | null
+          serial_number?: string | null
+          total_owed?: number
+          total_paid?: number
           updated_at?: string
         }
         Update: {
@@ -499,6 +547,9 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
+          serial_number?: string | null
+          total_owed?: number
+          total_paid?: number
           updated_at?: string
         }
         Relationships: []
@@ -684,6 +735,7 @@ export type Database = {
           city: string | null
           created_at: string
           created_by: string | null
+          created_by_username: string | null
           customer_address: string | null
           customer_id: string | null
           customer_name: string
@@ -695,6 +747,7 @@ export type Database = {
           governorate_id: string | null
           id: string
           invoice_number: string
+          is_printed: boolean
           locked_at: string | null
           manual_code: string | null
           metadata: Json
@@ -720,6 +773,7 @@ export type Database = {
           city?: string | null
           created_at?: string
           created_by?: string | null
+          created_by_username?: string | null
           customer_address?: string | null
           customer_id?: string | null
           customer_name: string
@@ -731,6 +785,7 @@ export type Database = {
           governorate_id?: string | null
           id?: string
           invoice_number: string
+          is_printed?: boolean
           locked_at?: string | null
           manual_code?: string | null
           metadata?: Json
@@ -756,6 +811,7 @@ export type Database = {
           city?: string | null
           created_at?: string
           created_by?: string | null
+          created_by_username?: string | null
           customer_address?: string | null
           customer_id?: string | null
           customer_name?: string
@@ -767,6 +823,7 @@ export type Database = {
           governorate_id?: string | null
           id?: string
           invoice_number?: string
+          is_printed?: boolean
           locked_at?: string | null
           manual_code?: string | null
           metadata?: Json
@@ -799,6 +856,13 @@ export type Database = {
             columns: ["delivery_agent_id"]
             isOneToOne: false
             referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_governorate_id_fkey"
+            columns: ["governorate_id"]
+            isOneToOne: false
+            referencedRelation: "governorates"
             referencedColumns: ["id"]
           },
           {
@@ -1307,6 +1371,7 @@ export type Database = {
           id: string
           is_active: boolean
           label: string | null
+          password: string | null
           password_type: string
           password_value: string
           updated_at: string
@@ -1316,6 +1381,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           label?: string | null
+          password?: string | null
           password_type: string
           password_value: string
           updated_at?: string
@@ -1325,6 +1391,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           label?: string | null
+          password?: string | null
           password_type?: string
           password_value?: string
           updated_at?: string
@@ -1340,6 +1407,7 @@ export type Database = {
           name: string
           notes: string | null
           transfer_balance: number
+          type: string | null
           updated_at: string
         }
         Insert: {
@@ -1350,6 +1418,7 @@ export type Database = {
           name?: string
           notes?: string | null
           transfer_balance?: number
+          type?: string | null
           updated_at?: string
         }
         Update: {
@@ -1360,6 +1429,7 @@ export type Database = {
           name?: string
           notes?: string | null
           transfer_balance?: number
+          type?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1369,6 +1439,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_old_activity_logs: { Args: never; Returns: undefined }
       reset_order_sequence: { Args: never; Returns: undefined }
     }
     Enums: {
