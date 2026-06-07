@@ -525,17 +525,30 @@ const UserManagement = () => {
                         <Button size="icon" variant="ghost" onClick={() => handleEditPermissions(user)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className="text-destructive"
-                          onClick={() => {
-                            setUserToDelete(user);
-                            setAdminDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="icon" variant="ghost" className="text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>حذف المستخدم "{user.username}"؟</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                هذا الإجراء لا يمكن التراجع عنه.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                onClick={() => deleteUserMutation.mutate(user.id)}
+                              >
+                                حذف
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </TableCell>
                   </TableRow>
