@@ -130,7 +130,7 @@ const Products = () => {
   const resetForm = () => {
     setOpen(false);
     setFormData({
-      name: "", code: "", barcode: "", description: "", price: "", offer_price: "", stock: "",
+      name: "", code: "", barcode: "", description: "", price: "", purchase_price: "", offer_price: "", stock: "",
       is_offer: false, category_id: "", size_options: [], color_options: [],
       quantity_pricing: Array.from({ length: 12 }, (_, i) => ({ quantity: i + 1, price: "" }))
     });
