@@ -29,8 +29,9 @@ const ManualInvoice = () => {
     pageCode: "",
     notes: "",
     shipping: 0,
-    lines: [emptyLine()],
+    lines: [emptyLine(), emptyLine()],
   });
+
 
   // Load all products once for fast in-memory lookup (1000+ supported)
   useEffect(() => {
