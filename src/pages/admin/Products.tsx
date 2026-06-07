@@ -83,6 +83,7 @@ const Products = () => {
         description: data.description || null,
         price: parseFloat(data.price) || 0,
         sale_price: parseFloat(data.price) || 0,
+        purchase_price: parseFloat(data.purchase_price) || 0,
         offer_price: data.offer_price ? parseFloat(data.offer_price) : null,
         is_offer: !!data.is_offer,
         stock: parseInt(data.stock) || 0,
