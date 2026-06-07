@@ -21,6 +21,7 @@ const ManualInvoice = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  const [invoiceNumberTouched, setInvoiceNumberTouched] = useState(false);
   const [data, setData] = useState<InvoiceData>({
     invoiceNumber: "",
     date: todayStr(),
@@ -49,7 +50,7 @@ const ManualInvoice = () => {
   }, []);
 
   const getNextInvoiceNumber = async () => {
-    const { data: nextCode, error } = await (supabase as any).rpc("reserve_next_order_code");
+    const { data: nextCode, error } = await (supabase as any).rpc("preview_next_order_code");
     if (error) throw error;
     return String(nextCode || "");
   };
@@ -133,7 +134,7 @@ const ManualInvoice = () => {
       const shipping = Number(data.shipping) || 0;
       const total = subtotal + shipping;
 
-      const invoiceCode = data.invoiceNumber.trim();
+      const invoiceCode = invoiceNumberTouched ? data.invoiceNumber.trim() : "";
       const pageCode = (data.pageCode || "").trim();
       const codesToCheck = Array.from(new Set([invoiceCode, pageCode].filter(Boolean)));
       for (const code of codesToCheck) {
@@ -209,6 +210,7 @@ const ManualInvoice = () => {
         notes: "",
         shipping: 0, lines: [emptyLine(), emptyLine()],
       });
+      setInvoiceNumberTouched(false);
     } catch (e: any) {
       const isDuplicate = e?.code === "23505" || String(e?.message || "").includes("duplicate_order_code") || String(e?.message || "").includes("duplicate key");
       toast({ title: isDuplicate ? "رقم مكرر" : "خطأ في الحفظ", description: isDuplicate ? duplicateCodeMessage : e.message, variant: "destructive" });
@@ -240,7 +242,15 @@ const ManualInvoice = () => {
         </div>
 
         <Card className="p-4 bg-muted/30">
-          <InvoiceTemplate data={data} editable onChange={setData} onCodeBlur={handleCodeBlur} />
+          <InvoiceTemplate
+            data={data}
+            editable
+            onChange={(next) => {
+              if (next.invoiceNumber !== data.invoiceNumber) setInvoiceNumberTouched(true);
+              setData(next);
+            }}
+            onCodeBlur={handleCodeBlur}
+          />
         </Card>
 
         <p className="no-print text-xs text-muted-foreground mt-3 text-center">
