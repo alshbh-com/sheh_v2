@@ -84,8 +84,8 @@ const buildInvoice = async (order: OrderLike) => {
   const barcodeSvg = await buildBarcodeSvg(barcodeValue);
 
   const headerCells = HEADER_LINKS.map((l, i) => `
-    <div style="display:flex;align-items:center;justify-content:center;gap:3px;padding:2px;${i < 3 ? "border-left:1px solid #000;" : ""}">
-      <span style="display:inline-flex;width:14px;height:14px;align-items:center;justify-content:center;background:#000;color:#fff;font-size:9px;border-radius:2px;">${esc(l.icon)}</span>
+    <div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:2px;${i < 3 ? "border-left:1px solid #000;" : ""}">
+      <span style="display:inline-flex;align-items:center;justify-content:center;">${l.icon}</span>
       <span style="font-size:10px;font-weight:bold;">${esc(l.label)}</span>
     </div>`).join("");
 
