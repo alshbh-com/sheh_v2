@@ -234,7 +234,14 @@ const Products = () => {
                       <div>
                         <Label htmlFor="stock">الكمية المتاحة *</Label>
                         <Input id="stock" type="number" value={formData.stock} onChange={(e) => setFormData({...formData, stock: e.target.value})} required />
-                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="purchase_price">تكلفة المنتج (ج.م)</Label>
+                      <Input id="purchase_price" type="number" step="0.01" value={formData.purchase_price} onChange={(e) => setFormData({...formData, purchase_price: e.target.value})} placeholder="للاطلاع فقط - لا تؤثر على السعر" />
+                      <p className="text-xs text-muted-foreground mt-1">للعلم فقط، لا تظهر للعميل ولا تدخل في الحسابات</p>
+                    </div>
+
                     </div>
 
                     <div className="flex items-center gap-2">
