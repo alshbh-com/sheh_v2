@@ -700,6 +700,7 @@ export type Database = {
           metadata: Json
           notes: string | null
           office_id: string | null
+          order_details: string | null
           order_number: string | null
           paid_amount: number
           payment_date: string | null
@@ -735,6 +736,7 @@ export type Database = {
           metadata?: Json
           notes?: string | null
           office_id?: string | null
+          order_details?: string | null
           order_number?: string | null
           paid_amount?: number
           payment_date?: string | null
@@ -770,6 +772,7 @@ export type Database = {
           metadata?: Json
           notes?: string | null
           office_id?: string | null
+          order_details?: string | null
           order_number?: string | null
           paid_amount?: number
           payment_date?: string | null
@@ -896,6 +899,7 @@ export type Database = {
           category_id: string | null
           code: string
           color: string | null
+          color_options: string[] | null
           created_at: string
           description: string | null
           id: string
@@ -906,12 +910,14 @@ export type Database = {
           metadata: Json
           min_price: number
           name: string
+          offer_price: number | null
           price: number
           purchase_price: number
           quantity: number
           quantity_pricing: Json
           sale_price: number
           size: string | null
+          size_options: string[] | null
           stock: number
           updated_at: string
           wholesale_price: number
@@ -922,6 +928,7 @@ export type Database = {
           category_id?: string | null
           code: string
           color?: string | null
+          color_options?: string[] | null
           created_at?: string
           description?: string | null
           id?: string
@@ -932,12 +939,14 @@ export type Database = {
           metadata?: Json
           min_price?: number
           name: string
+          offer_price?: number | null
           price?: number
           purchase_price?: number
           quantity?: number
           quantity_pricing?: Json
           sale_price?: number
           size?: string | null
+          size_options?: string[] | null
           stock?: number
           updated_at?: string
           wholesale_price?: number
@@ -948,6 +957,7 @@ export type Database = {
           category_id?: string | null
           code?: string
           color?: string | null
+          color_options?: string[] | null
           created_at?: string
           description?: string | null
           id?: string
@@ -958,12 +968,14 @@ export type Database = {
           metadata?: Json
           min_price?: number
           name?: string
+          offer_price?: number | null
           price?: number
           purchase_price?: number
           quantity?: number
           quantity_pricing?: Json
           sale_price?: number
           size?: string | null
+          size_options?: string[] | null
           stock?: number
           updated_at?: string
           wholesale_price?: number
@@ -993,7 +1005,9 @@ export type Database = {
           product_name: string | null
           quantity: number
           reason: string | null
+          return_amount: number
           returned_at: string
+          returned_items: Json | null
           status: string
           updated_at: string
         }
@@ -1011,7 +1025,9 @@ export type Database = {
           product_name?: string | null
           quantity?: number
           reason?: string | null
+          return_amount?: number
           returned_at?: string
+          returned_items?: Json | null
           status?: string
           updated_at?: string
         }
@@ -1029,7 +1045,9 @@ export type Database = {
           product_name?: string | null
           quantity?: number
           reason?: string | null
+          return_amount?: number
           returned_at?: string
+          returned_items?: Json | null
           status?: string
           updated_at?: string
         }
