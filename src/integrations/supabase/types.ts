@@ -155,6 +155,7 @@ export type Database = {
           created_by: string | null
           id: string
           notes: string | null
+          order_id: string | null
           payment_date: string
           payment_method: string
           updated_at: string
@@ -167,6 +168,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           notes?: string | null
+          order_id?: string | null
           payment_date?: string
           payment_method?: string
           updated_at?: string
@@ -179,6 +181,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           notes?: string | null
+          order_id?: string | null
           payment_date?: string
           payment_method?: string
           updated_at?: string
@@ -284,7 +287,9 @@ export type Database = {
           description: string | null
           id: string
           initial_balance: number
+          is_active: boolean
           name: string
+          opening_balance: number
           payment_method: string
           transaction_date: string
           transaction_type: string
@@ -297,7 +302,9 @@ export type Database = {
           description?: string | null
           id?: string
           initial_balance?: number
+          is_active?: boolean
           name: string
+          opening_balance?: number
           payment_method?: string
           transaction_date?: string
           transaction_type?: string
@@ -310,7 +317,9 @@ export type Database = {
           description?: string | null
           id?: string
           initial_balance?: number
+          is_active?: boolean
           name?: string
+          opening_balance?: number
           payment_method?: string
           transaction_date?: string
           transaction_type?: string
@@ -635,6 +644,39 @@ export type Database = {
           },
         ]
       }
+      order_status_history: {
+        Row: {
+          changed_by: string | null
+          changed_by_username: string | null
+          created_at: string
+          id: string
+          new_status: string | null
+          old_status: string | null
+          order_id: string | null
+          reason: string | null
+        }
+        Insert: {
+          changed_by?: string | null
+          changed_by_username?: string | null
+          created_at?: string
+          id?: string
+          new_status?: string | null
+          old_status?: string | null
+          order_id?: string | null
+          reason?: string | null
+        }
+        Update: {
+          changed_by?: string | null
+          changed_by_username?: string | null
+          created_at?: string
+          id?: string
+          new_status?: string | null
+          old_status?: string | null
+          order_id?: string | null
+          reason?: string | null
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           agent_shipping_cost: number
@@ -650,9 +692,11 @@ export type Database = {
           delivery_agent_id: string | null
           discount: number
           governorate: string | null
+          governorate_id: string | null
           id: string
           invoice_number: string
           locked_at: string | null
+          manual_code: string | null
           metadata: Json
           notes: string | null
           office_id: string | null
@@ -666,6 +710,7 @@ export type Database = {
           status: string
           subtotal: number
           total_amount: number
+          tracking_code: string | null
           updated_at: string
         }
         Insert: {
@@ -682,9 +727,11 @@ export type Database = {
           delivery_agent_id?: string | null
           discount?: number
           governorate?: string | null
+          governorate_id?: string | null
           id?: string
           invoice_number: string
           locked_at?: string | null
+          manual_code?: string | null
           metadata?: Json
           notes?: string | null
           office_id?: string | null
@@ -698,6 +745,7 @@ export type Database = {
           status?: string
           subtotal?: number
           total_amount?: number
+          tracking_code?: string | null
           updated_at?: string
         }
         Update: {
@@ -714,9 +762,11 @@ export type Database = {
           delivery_agent_id?: string | null
           discount?: number
           governorate?: string | null
+          governorate_id?: string | null
           id?: string
           invoice_number?: string
           locked_at?: string | null
+          manual_code?: string | null
           metadata?: Json
           notes?: string | null
           office_id?: string | null
@@ -730,6 +780,7 @@ export type Database = {
           status?: string
           subtotal?: number
           total_amount?: number
+          tracking_code?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -851,12 +902,14 @@ export type Database = {
           image_url: string | null
           images: string[]
           is_active: boolean
+          is_offer: boolean
           metadata: Json
           min_price: number
           name: string
           price: number
           purchase_price: number
           quantity: number
+          quantity_pricing: Json
           sale_price: number
           size: string | null
           stock: number
@@ -875,12 +928,14 @@ export type Database = {
           image_url?: string | null
           images?: string[]
           is_active?: boolean
+          is_offer?: boolean
           metadata?: Json
           min_price?: number
           name: string
           price?: number
           purchase_price?: number
           quantity?: number
+          quantity_pricing?: Json
           sale_price?: number
           size?: string | null
           stock?: number
@@ -899,12 +954,14 @@ export type Database = {
           image_url?: string | null
           images?: string[]
           is_active?: boolean
+          is_offer?: boolean
           metadata?: Json
           min_price?: number
           name?: string
           price?: number
           purchase_price?: number
           quantity?: number
+          quantity_pricing?: Json
           sale_price?: number
           size?: string | null
           stock?: number
@@ -1012,6 +1069,8 @@ export type Database = {
           action: string
           created_at: string
           id: string
+          new_status: string | null
+          old_status: string | null
           order_id: string | null
           payload: Json
           session_id: string | null
@@ -1022,6 +1081,8 @@ export type Database = {
           action: string
           created_at?: string
           id?: string
+          new_status?: string | null
+          old_status?: string | null
           order_id?: string | null
           payload?: Json
           session_id?: string | null
@@ -1032,6 +1093,8 @@ export type Database = {
           action?: string
           created_at?: string
           id?: string
+          new_status?: string | null
+          old_status?: string | null
           order_id?: string | null
           payload?: Json
           session_id?: string | null
@@ -1061,7 +1124,8 @@ export type Database = {
           quantity: number
           scan_session_id: string | null
           scanned_at: string
-          session_id: string
+          scanned_code: string | null
+          session_id: string | null
           status: string
           updated_at: string
         }
@@ -1077,7 +1141,8 @@ export type Database = {
           quantity?: number
           scan_session_id?: string | null
           scanned_at?: string
-          session_id: string
+          scanned_code?: string | null
+          session_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -1093,7 +1158,8 @@ export type Database = {
           quantity?: number
           scan_session_id?: string | null
           scanned_at?: string
-          session_id?: string
+          scanned_code?: string | null
+          session_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -1125,14 +1191,18 @@ export type Database = {
         Row: {
           completed_at: string | null
           created_at: string
+          ended_at: string | null
           id: string
           name: string | null
           payload: Json
           scanned_items: number
-          session_id: string
+          session_id: string | null
           started_at: string
+          started_by: string | null
+          started_by_username: string | null
           status: string
           total_items: number
+          total_scanned: number
           updated_at: string
           user_id: string | null
           username: string | null
@@ -1140,14 +1210,18 @@ export type Database = {
         Insert: {
           completed_at?: string | null
           created_at?: string
+          ended_at?: string | null
           id?: string
           name?: string | null
           payload?: Json
           scanned_items?: number
-          session_id: string
+          session_id?: string | null
           started_at?: string
+          started_by?: string | null
+          started_by_username?: string | null
           status?: string
           total_items?: number
+          total_scanned?: number
           updated_at?: string
           user_id?: string | null
           username?: string | null
@@ -1155,14 +1229,18 @@ export type Database = {
         Update: {
           completed_at?: string | null
           created_at?: string
+          ended_at?: string | null
           id?: string
           name?: string | null
           payload?: Json
           scanned_items?: number
-          session_id?: string
+          session_id?: string | null
           started_at?: string
+          started_by?: string | null
+          started_by_username?: string | null
           status?: string
           total_items?: number
+          total_scanned?: number
           updated_at?: string
           user_id?: string | null
           username?: string | null
