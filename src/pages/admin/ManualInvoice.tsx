@@ -6,6 +6,7 @@ import { ArrowRight, Printer, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import InvoiceTemplate, { InvoiceData, InvoiceLine } from "@/components/admin/InvoiceTemplate";
+import { printInvoiceTemplate } from "@/lib/printInvoiceTemplate";
 
 const emptyLine = (): InvoiceLine => ({ code: "", name: "", color: "", size: "", qty: 1, price: 0 });
 
@@ -13,6 +14,8 @@ const todayStr = () => {
   const d = new Date();
   return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 };
+
+const duplicateCodeMessage = "الرقم مستخدم قبل كده في فاتورة/أوردر تاني. اكتب رقم مختلف.";
 
 const ManualInvoice = () => {
   const navigate = useNavigate();
@@ -45,11 +48,21 @@ const ManualInvoice = () => {
     })();
   }, []);
 
-  // Get next invoice number suggestion
+  const getNextInvoiceNumber = async () => {
+    const { data: nextCode, error } = await (supabase as any).rpc("reserve_next_order_code");
+    if (error) throw error;
+    return String(nextCode || "");
+  };
+
+  // Get next invoice number suggestion from the order-number sequence
   useEffect(() => {
     (async () => {
-      const { count } = await supabase.from("orders").select("*", { count: "exact", head: true });
-      setData((d) => ({ ...d, invoiceNumber: String((count || 0) + 1) }));
+      try {
+        const nextCode = await getNextInvoiceNumber();
+        setData((d) => ({ ...d, invoiceNumber: nextCode }));
+      } catch {
+        setData((d) => ({ ...d, invoiceNumber: "" }));
+      }
     })();
   }, []);
 
@@ -91,6 +104,17 @@ const ManualInvoice = () => {
 
   const filledLines = () => data.lines.filter((l) => l.code && l.qty > 0);
 
+  const isCodeTaken = async (code: string) => {
+    const value = code.trim();
+    if (!value) return false;
+    const checks = await Promise.all(
+      ["invoice_number", "order_number", "manual_code", "tracking_code"].map((column) =>
+        supabase.from("orders").select("id").eq(column as any, value).limit(1)
+      )
+    );
+    return checks.some(({ data: rows }) => rows && rows.length > 0);
+  };
+
   const save = async (thenPrint = false) => {
     const items = filledLines();
     if (items.length === 0) {
@@ -107,20 +131,14 @@ const ManualInvoice = () => {
       const shipping = Number(data.shipping) || 0;
       const total = subtotal + shipping;
 
-      // التحقق من أن رقم الباركود (كود الصفحة أو رقم الفاتورة) فريد ولم يُستخدم من قبل
-      const barcodeVal = (data.pageCode || data.invoiceNumber || "").trim();
-      if (barcodeVal) {
-        const { data: dup } = await supabase
-          .from("orders")
-          .select("id")
-          .or(
-            `invoice_number.eq.${barcodeVal},order_number.eq.${barcodeVal},manual_code.eq.${barcodeVal},tracking_code.eq.${barcodeVal}`
-          )
-          .limit(1);
-        if (dup && dup.length > 0) {
+      const invoiceCode = data.invoiceNumber.trim();
+      const pageCode = (data.pageCode || "").trim();
+      const codesToCheck = Array.from(new Set([invoiceCode, pageCode].filter(Boolean)));
+      for (const code of codesToCheck) {
+        if (await isCodeTaken(code)) {
           toast({
             title: "رقم مكرر",
-            description: `الرقم ${barcodeVal} مستخدم من قبل في فاتورة أخرى. غيّر رقم الفاتورة أو كود الصفحة.`,
+            description: `الرقم ${code} مستخدم من قبل في فاتورة أخرى.`,
             variant: "destructive",
           });
           setSaving(false);
@@ -131,10 +149,9 @@ const ManualInvoice = () => {
       const { data: order, error } = await supabase
         .from("orders")
         .insert({
-          invoice_number: data.invoiceNumber,
-          order_number: data.invoiceNumber,
-          manual_code: data.pageCode || null,
-          tracking_code: data.pageCode || data.invoiceNumber,
+          ...(invoiceCode ? { invoice_number: invoiceCode, order_number: invoiceCode } : {}),
+          manual_code: pageCode || null,
+          ...(pageCode || invoiceCode ? { tracking_code: pageCode || invoiceCode } : {}),
           account_name: data.accountName || null,
           governorate: data.governorate || null,
           customer_name: data.customerName,
@@ -170,14 +187,20 @@ const ManualInvoice = () => {
       });
       await supabase.from("order_items").insert(itemRows);
 
-      toast({ title: "تم حفظ الفاتورة بنجاح", description: `رقم الفاتورة: ${data.invoiceNumber}` });
+      const savedInvoiceNumber = String(order.invoice_number || order.order_number || invoiceCode || "");
+      const savedOrder = { ...order, invoice_number: savedInvoiceNumber, order_number: savedInvoiceNumber, order_items: itemRows };
+
+      toast({ title: "تم حفظ الفاتورة بنجاح", description: `رقم الفاتورة: ${savedInvoiceNumber}` });
       if (thenPrint) {
-        setTimeout(() => window.print(), 200);
+        await printInvoiceTemplate([savedOrder] as any, { markPrinted: false, copies: 2 });
       }
       // ابقَ على نفس الصفحة — جهّز فاتورة جديدة فارغة
-      const { count } = await supabase.from("orders").select("*", { count: "exact", head: true });
+      let nextInvoiceNumber = "";
+      try {
+        nextInvoiceNumber = await getNextInvoiceNumber();
+      } catch {}
       setData({
-        invoiceNumber: String((count || 0) + 1),
+        invoiceNumber: nextInvoiceNumber,
         date: todayStr(),
         customerName: "", customerPhone: "", customerAddress: "",
         governorate: "", accountName: "", pageCode: "",
@@ -185,7 +208,8 @@ const ManualInvoice = () => {
         shipping: 0, lines: [emptyLine(), emptyLine()],
       });
     } catch (e: any) {
-      toast({ title: "خطأ في الحفظ", description: e.message, variant: "destructive" });
+      const isDuplicate = e?.code === "23505" || String(e?.message || "").includes("duplicate_order_code") || String(e?.message || "").includes("duplicate key");
+      toast({ title: isDuplicate ? "رقم مكرر" : "خطأ في الحفظ", description: isDuplicate ? duplicateCodeMessage : e.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
