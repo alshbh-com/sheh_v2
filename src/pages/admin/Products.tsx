@@ -152,6 +152,7 @@ const Products = () => {
       barcode: product.barcode || "",
       description: product.description || "",
       price: product.price?.toString() || "",
+      purchase_price: product.purchase_price?.toString() || "",
       offer_price: product.offer_price?.toString() || "",
       stock: product.stock?.toString() || "",
       is_offer: !!product.is_offer,
