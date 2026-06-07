@@ -29,6 +29,7 @@ const Products = () => {
     barcode: "",
     description: "",
     price: "",
+    purchase_price: "",
     offer_price: "",
     stock: "",
     is_offer: false,
@@ -82,6 +83,7 @@ const Products = () => {
         description: data.description || null,
         price: parseFloat(data.price) || 0,
         sale_price: parseFloat(data.price) || 0,
+        purchase_price: parseFloat(data.purchase_price) || 0,
         offer_price: data.offer_price ? parseFloat(data.offer_price) : null,
         is_offer: !!data.is_offer,
         stock: parseInt(data.stock) || 0,
@@ -129,7 +131,7 @@ const Products = () => {
   const resetForm = () => {
     setOpen(false);
     setFormData({
-      name: "", code: "", barcode: "", description: "", price: "", offer_price: "", stock: "",
+      name: "", code: "", barcode: "", description: "", price: "", purchase_price: "", offer_price: "", stock: "",
       is_offer: false, category_id: "", size_options: [], color_options: [],
       quantity_pricing: Array.from({ length: 12 }, (_, i) => ({ quantity: i + 1, price: "" }))
     });
@@ -151,6 +153,7 @@ const Products = () => {
       barcode: product.barcode || "",
       description: product.description || "",
       price: product.price?.toString() || "",
+      purchase_price: product.purchase_price?.toString() || "",
       offer_price: product.offer_price?.toString() || "",
       stock: product.stock?.toString() || "",
       is_offer: !!product.is_offer,
@@ -231,7 +234,14 @@ const Products = () => {
                       <div>
                         <Label htmlFor="stock">الكمية المتاحة *</Label>
                         <Input id="stock" type="number" value={formData.stock} onChange={(e) => setFormData({...formData, stock: e.target.value})} required />
-                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="purchase_price">تكلفة المنتج (ج.م)</Label>
+                      <Input id="purchase_price" type="number" step="0.01" value={formData.purchase_price} onChange={(e) => setFormData({...formData, purchase_price: e.target.value})} placeholder="للاطلاع فقط - لا تؤثر على السعر" />
+                      <p className="text-xs text-muted-foreground mt-1">للعلم فقط، لا تظهر للعميل ولا تدخل في الحسابات</p>
+                    </div>
+
                     </div>
 
                     <div className="flex items-center gap-2">
