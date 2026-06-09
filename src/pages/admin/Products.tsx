@@ -521,11 +521,37 @@ const Products = () => {
             </div>
           </CardHeader>
           <CardContent>
-            {!products || products.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">لا توجد منتجات</p>
+            <div className="relative mb-4">
+              <Input
+                placeholder="ابحث بالاسم، الكود، الباركود..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pr-10"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            {(() => {
+              const q = searchQuery.trim().toLowerCase();
+              const filteredProducts = !q
+                ? products
+                : products?.filter((p: any) =>
+                    [p.name, p.code, p.barcode, p.wholesale_code, p.description]
+                      .filter(Boolean)
+                      .some((v: string) => String(v).toLowerCase().includes(q))
+                  );
+              return !filteredProducts || filteredProducts.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">{q ? "لا توجد نتائج مطابقة" : "لا توجد منتجات"}</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <Card key={product.id} className="overflow-hidden">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-2 mb-2">
