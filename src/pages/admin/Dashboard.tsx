@@ -53,7 +53,7 @@ const adminSections = [
   { title: "المكاتب", description: "إدارة المكاتب والفروع", icon: Building2, path: "/admin/offices", color: "text-sky-500", permission: "user_management" },
 ];
 
-const LOW_STOCK_THRESHOLD = 10;
+const LOW_STOCK_THRESHOLD = 1;
 
 const Dashboard = () => {
   const navigate = useNavigate();
