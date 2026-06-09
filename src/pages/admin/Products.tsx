@@ -381,7 +381,8 @@ const Products = () => {
                   </form>
                 </DialogContent>
               </Dialog>
-            )}
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {!products || products.length === 0 ? (
