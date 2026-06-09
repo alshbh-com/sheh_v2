@@ -225,9 +225,9 @@ const Products = () => {
 
       const payload = rows
         .map((r) => {
-          const name = pick(r, ["اسم المنتج", "الاسم", "name", "product name"]);
-          const code = pick(r, ["الكود", "كود", "code", "كود المنتج"]);
-          const price = pick(r, ["السعر", "السعر الرئيسي", "price"]);
+          const name = pick(r, ["الاسم", "اسم المنتج", "name", "product name"]);
+          const code = pick(r, ["رمز المنتج", "الكود", "كود", "code", "كود المنتج"]);
+          const price = pick(r, ["سعر التخفيض", "السعر", "السعر الرئيسي", "price"]);
           if (!name || !code) return null;
           return {
             name: String(name).trim(),
