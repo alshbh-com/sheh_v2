@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, Plus, ArrowLeft, Edit, Tag, X, Printer } from "lucide-react";
+import { Trash2, Plus, ArrowLeft, Edit, Tag, X, Printer, FileSpreadsheet } from "lucide-react";
+import * as XLSX from "xlsx";
 import { printProductLabel } from "@/lib/printProductLabel";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -30,6 +31,8 @@ const Products = () => {
     description: "",
     price: "",
     purchase_price: "",
+    wholesale_price: "",
+    wholesale_code: "",
     offer_price: "",
     stock: "",
     is_offer: false,
@@ -84,6 +87,8 @@ const Products = () => {
         price: parseFloat(data.price) || 0,
         sale_price: parseFloat(data.price) || 0,
         purchase_price: parseFloat(data.purchase_price) || 0,
+        wholesale_price: data.wholesale_price ? parseFloat(data.wholesale_price) : null,
+        wholesale_code: data.wholesale_code?.trim() || null,
         offer_price: data.offer_price ? parseFloat(data.offer_price) : null,
         is_offer: !!data.is_offer,
         stock: parseInt(data.stock) || 0,
@@ -131,7 +136,8 @@ const Products = () => {
   const resetForm = () => {
     setOpen(false);
     setFormData({
-      name: "", code: "", barcode: "", description: "", price: "", purchase_price: "", offer_price: "", stock: "",
+      name: "", code: "", barcode: "", description: "", price: "", purchase_price: "",
+      wholesale_price: "", wholesale_code: "", offer_price: "", stock: "",
       is_offer: false, category_id: "", size_options: [], color_options: [],
       quantity_pricing: Array.from({ length: 12 }, (_, i) => ({ quantity: i + 1, price: "" }))
     });
@@ -154,6 +160,8 @@ const Products = () => {
       description: product.description || "",
       price: product.price?.toString() || "",
       purchase_price: product.purchase_price?.toString() || "",
+      wholesale_price: product.wholesale_price?.toString() || "",
+      wholesale_code: product.wholesale_code || "",
       offer_price: product.offer_price?.toString() || "",
       stock: product.stock?.toString() || "",
       is_offer: !!product.is_offer,
@@ -170,6 +178,30 @@ const Products = () => {
     createMutation.mutate(formData);
   };
 
+  const exportToExcel = () => {
+    if (!products || products.length === 0) {
+      toast.error("لا توجد منتجات للتصدير");
+      return;
+    }
+    const rows = products.map((p: any) => ({
+      "الكود": p.code || "",
+      "الباركود": p.barcode || "",
+      "اسم المنتج": p.name || "",
+      "السعر": Number(p.price || 0),
+      "سعر العرض": p.offer_price ? Number(p.offer_price) : "",
+      "تكلفة المنتج": Number(p.purchase_price || 0),
+      "سعر الجملة": p.wholesale_price ? Number(p.wholesale_price) : "",
+      "كود الجملة": p.wholesale_code || "",
+      "الكمية المتاحة": Number(p.stock || 0),
+      "نشط": p.is_active ? "نعم" : "لا",
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "المنتجات");
+    XLSX.writeFile(wb, `products-${new Date().toISOString().split("T")[0]}.xlsx`);
+    toast.success("تم تصدير قائمة المنتجات");
+  };
+
   if (isLoading) return <div className="p-8">جاري التحميل...</div>;
 
   return (
@@ -180,18 +212,22 @@ const Products = () => {
         </Button>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <CardTitle>المنتجات</CardTitle>
               {!canEditProducts && (
                 <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">مشاهدة فقط</span>
               )}
             </div>
-            {canEditProducts && (
-              <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) resetForm(); else setOpen(isOpen); }}>
-                <DialogTrigger asChild>
-                  <Button><Plus className="ml-2 h-4 w-4" /> إضافة منتج</Button>
-                </DialogTrigger>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={exportToExcel}>
+                <FileSpreadsheet className="ml-2 h-4 w-4" /> تصدير Excel
+              </Button>
+              {canEditProducts && (
+                <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) resetForm(); else setOpen(isOpen); }}>
+                  <DialogTrigger asChild>
+                    <Button><Plus className="ml-2 h-4 w-4" /> إضافة منتج</Button>
+                  </DialogTrigger>
                 <DialogContent className="max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
                   <DialogHeader>
                     <DialogTitle>{editingProduct ? "تعديل منتج" : "إضافة منتج جديد"}</DialogTitle>
@@ -242,6 +278,18 @@ const Products = () => {
                       <p className="text-xs text-muted-foreground mt-1">للعلم فقط، لا تظهر للعميل ولا تدخل في الحسابات</p>
                     </div>
 
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 p-3 border rounded-md bg-muted/30">
+                      <div>
+                        <Label htmlFor="wholesale_price">سعر الجملة (ج.م) — اختياري</Label>
+                        <Input id="wholesale_price" type="number" step="0.01" value={formData.wholesale_price} onChange={(e) => setFormData({...formData, wholesale_price: e.target.value})} placeholder="مثلاً: 150" />
+                      </div>
+                      <div>
+                        <Label htmlFor="wholesale_code">كود الجملة — اختياري</Label>
+                        <Input id="wholesale_code" value={formData.wholesale_code} onChange={(e) => setFormData({...formData, wholesale_code: e.target.value})} placeholder="مثلاً: P001-W" />
+                        <p className="text-xs text-muted-foreground mt-1">لما يتكتب في الفاتورة، السعر يتحول لسعر الجملة تلقائي</p>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -333,7 +381,8 @@ const Products = () => {
                   </form>
                 </DialogContent>
               </Dialog>
-            )}
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {!products || products.length === 0 ? (

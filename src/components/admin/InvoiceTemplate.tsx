@@ -18,6 +18,7 @@ export type InvoiceData = {
   governorate?: string;
   accountName?: string;
   pageCode?: string; // كود الصفحة (يستخدم في الباركود)
+  extraNumber?: string; // رقم إضافي
   notes: string;
   shipping: number;
   lines: InvoiceLine[];
@@ -211,13 +212,21 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
               )}
             </div>
           </div>
-          <div className="grid grid-cols-[80px_1fr] border-b border-black">
+          <div className="grid grid-cols-[80px_1fr_80px_1fr] border-b border-black">
             <div className="border-l border-black p-1 text-center font-bold text-[12px]">اسم الحساب</div>
-            <div className="p-1">
+            <div className="border-l border-black p-1">
               {editable ? (
                 <input className={inputCls} value={data.accountName || ""} onChange={(e) => update({ accountName: e.target.value })} placeholder="(اختياري)" />
               ) : (
                 <div className="text-center">{data.accountName || ""}</div>
+              )}
+            </div>
+            <div className="border-l border-black p-1 text-center font-bold text-[12px]">رقم إضافي</div>
+            <div className="p-1">
+              {editable ? (
+                <input className={inputCls} value={data.extraNumber || ""} onChange={(e) => update({ extraNumber: e.target.value })} placeholder="(اختياري)" />
+              ) : (
+                <div className="text-center">{data.extraNumber || ""}</div>
               )}
             </div>
           </div>
@@ -248,7 +257,8 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
             <th className="border border-black p-1 w-[36px]">عدد</th>
             <th className="border border-black p-1 w-[44px]">اللون</th>
             <th className="border border-black p-1">بيان</th>
-            <th className="border border-black p-1 w-[70px]">المجموع</th>
+            <th className="border border-black p-1 w-[55px]">السعر</th>
+            <th className="border border-black p-1 w-[60px]">المجموع</th>
             {editable && <th className="border border-black p-1 w-[44px] no-print">⚙</th>}
           </tr>
         </thead>
@@ -289,6 +299,11 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
                   ) : (line.name)}
                 </td>
                 <td className="border border-black p-0.5 font-semibold">
+                  {editable ? (
+                    <input type="number" className={inputCls} value={line.price || ""} onChange={(e) => updateLine(idx, { price: parseFloat(e.target.value) || 0 })} />
+                  ) : (line.price > 0 ? line.price.toFixed(0) : "")}
+                </td>
+                <td className="border border-black p-0.5 font-semibold">
                   {line.qty > 0 ? lineTotal.toFixed(0) : ""}
                 </td>
                 {editable && (
@@ -318,13 +333,13 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
         <tfoot className="text-[11px]">
           <tr>
             <td className="border border-black p-1 text-center font-bold" colSpan={2}>عدد القطع</td>
-            <td className="border border-black p-1 text-center font-bold" colSpan={2}>{totalQty}</td>
+            <td className="border border-black p-1 text-center font-bold" colSpan={3}>{totalQty}</td>
             <td className="border border-black p-1 text-center font-bold">المجموع</td>
             <td className="border border-black p-1 text-center font-bold">{subtotal.toFixed(0)}</td>
             {editable && <td className="border border-black no-print"></td>}
           </tr>
           <tr>
-            <td className="border border-black p-1" colSpan={4}></td>
+            <td className="border border-black p-1" colSpan={5}></td>
             <td className="border border-black p-1 text-center font-bold">شحن</td>
             <td className="border border-black p-1 text-center font-bold">
               {editable ? (
@@ -334,7 +349,7 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
             {editable && <td className="border border-black no-print"></td>}
           </tr>
           <tr>
-            <td className="border border-black p-1 text-center font-bold text-[13px]" colSpan={5}>الاجمالى</td>
+            <td className="border border-black p-1 text-center font-bold text-[13px]" colSpan={6}>الاجمالى</td>
             <td className="border border-black p-1 text-center font-bold text-[13px]">{total.toFixed(0)}</td>
             {editable && <td className="border border-black no-print"></td>}
           </tr>

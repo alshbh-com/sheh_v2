@@ -763,6 +763,7 @@ export type Database = {
           delivered_at: string | null
           delivery_agent_id: string | null
           discount: number
+          extra_number: string | null
           governorate: string | null
           governorate_id: string | null
           id: string
@@ -805,6 +806,7 @@ export type Database = {
           delivered_at?: string | null
           delivery_agent_id?: string | null
           discount?: number
+          extra_number?: string | null
           governorate?: string | null
           governorate_id?: string | null
           id?: string
@@ -847,6 +849,7 @@ export type Database = {
           delivered_at?: string | null
           delivery_agent_id?: string | null
           discount?: number
+          extra_number?: string | null
           governorate?: string | null
           governorate_id?: string | null
           id?: string
@@ -1014,6 +1017,7 @@ export type Database = {
           size_options: string[] | null
           stock: number
           updated_at: string
+          wholesale_code: string | null
           wholesale_price: number
         }
         Insert: {
@@ -1043,6 +1047,7 @@ export type Database = {
           size_options?: string[] | null
           stock?: number
           updated_at?: string
+          wholesale_code?: string | null
           wholesale_price?: number
         }
         Update: {
@@ -1072,6 +1077,7 @@ export type Database = {
           size_options?: string[] | null
           stock?: number
           updated_at?: string
+          wholesale_code?: string | null
           wholesale_price?: number
         }
         Relationships: [
