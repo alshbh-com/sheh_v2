@@ -24,6 +24,7 @@ const Products = () => {
   const canEditProducts = canEdit('products');
   const [open, setOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const [formData, setFormData] = useState({
     name: "",
