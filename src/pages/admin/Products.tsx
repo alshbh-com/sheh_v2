@@ -212,18 +212,22 @@ const Products = () => {
         </Button>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <CardTitle>المنتجات</CardTitle>
               {!canEditProducts && (
                 <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">مشاهدة فقط</span>
               )}
             </div>
-            {canEditProducts && (
-              <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) resetForm(); else setOpen(isOpen); }}>
-                <DialogTrigger asChild>
-                  <Button><Plus className="ml-2 h-4 w-4" /> إضافة منتج</Button>
-                </DialogTrigger>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={exportToExcel}>
+                <FileSpreadsheet className="ml-2 h-4 w-4" /> تصدير Excel
+              </Button>
+              {canEditProducts && (
+                <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) resetForm(); else setOpen(isOpen); }}>
+                  <DialogTrigger asChild>
+                    <Button><Plus className="ml-2 h-4 w-4" /> إضافة منتج</Button>
+                  </DialogTrigger>
                 <DialogContent className="max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
                   <DialogHeader>
                     <DialogTitle>{editingProduct ? "تعديل منتج" : "إضافة منتج جديد"}</DialogTitle>
@@ -274,6 +278,18 @@ const Products = () => {
                       <p className="text-xs text-muted-foreground mt-1">للعلم فقط، لا تظهر للعميل ولا تدخل في الحسابات</p>
                     </div>
 
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 p-3 border rounded-md bg-muted/30">
+                      <div>
+                        <Label htmlFor="wholesale_price">سعر الجملة (ج.م) — اختياري</Label>
+                        <Input id="wholesale_price" type="number" step="0.01" value={formData.wholesale_price} onChange={(e) => setFormData({...formData, wholesale_price: e.target.value})} placeholder="مثلاً: 150" />
+                      </div>
+                      <div>
+                        <Label htmlFor="wholesale_code">كود الجملة — اختياري</Label>
+                        <Input id="wholesale_code" value={formData.wholesale_code} onChange={(e) => setFormData({...formData, wholesale_code: e.target.value})} placeholder="مثلاً: P001-W" />
+                        <p className="text-xs text-muted-foreground mt-1">لما يتكتب في الفاتورة، السعر يتحول لسعر الجملة تلقائي</p>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2">
