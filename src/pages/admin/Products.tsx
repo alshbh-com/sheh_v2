@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, Plus, ArrowLeft, Edit, Tag, X, Printer, FileSpreadsheet, Upload } from "lucide-react";
 import { useRef } from "react";
 import * as XLSX from "xlsx";
@@ -24,6 +25,7 @@ const Products = () => {
   const canEditProducts = canEdit('products');
   const [open, setOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const [formData, setFormData] = useState({
     name: "",
@@ -134,6 +136,25 @@ const Products = () => {
     onError: () => toast.error("حدث خطأ أثناء الحذف")
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      if (!ids.length) return 0;
+      await supabase.from("product_images").delete().in("product_id", ids);
+      await supabase.from("product_color_variants").delete().in("product_id", ids);
+      await supabase.from("order_items").update({ product_id: null }).in("product_id", ids);
+      await supabase.from("analytics_events").update({ product_id: null }).in("product_id", ids);
+      const { error } = await supabase.from("products").delete().in("id", ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      setSelectedIds(new Set());
+      toast.success(`تم حذف ${count} منتج`);
+    },
+    onError: (e: any) => toast.error(e?.message || "فشل الحذف الجماعي"),
+  });
+
   const resetForm = () => {
     setOpen(false);
     setFormData({
@@ -225,9 +246,9 @@ const Products = () => {
 
       const payload = rows
         .map((r) => {
-          const name = pick(r, ["اسم المنتج", "الاسم", "name", "product name"]);
-          const code = pick(r, ["الكود", "كود", "code", "كود المنتج"]);
-          const price = pick(r, ["السعر", "السعر الرئيسي", "price"]);
+          const name = pick(r, ["الاسم", "اسم المنتج", "name", "product name"]);
+          const code = pick(r, ["رمز المنتج", "الكود", "كود", "code", "كود المنتج"]);
+          const price = pick(r, ["سعر التخفيض", "السعر", "السعر الرئيسي", "price"]);
           if (!name || !code) return null;
           return {
             name: String(name).trim(),
@@ -241,7 +262,7 @@ const Products = () => {
         })
         .filter(Boolean);
 
-      if (!payload.length) throw new Error("لم يتم العثور على منتجات صالحة (مطلوب: الاسم، الكود، السعر)");
+      if (!payload.length) throw new Error("لم يتم العثور على منتجات صالحة (مطلوب: الاسم، رمز المنتج، سعر التخفيض)");
 
       let inserted = 0, updated = 0, failed = 0;
       for (const p of payload as any[]) {
@@ -287,7 +308,35 @@ const Products = () => {
                 <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">مشاهدة فقط</span>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {canEditProducts && products && products.length > 0 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (selectedIds.size === products.length) setSelectedIds(new Set());
+                      else setSelectedIds(new Set(products.map((p: any) => p.id)));
+                    }}
+                  >
+                    {selectedIds.size === products.length ? "إلغاء التحديد" : "تحديد الكل"}
+                  </Button>
+                  {selectedIds.size > 0 && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={bulkDeleteMutation.isPending}
+                      onClick={() => {
+                        if (confirm(`حذف ${selectedIds.size} منتج؟ لا يمكن التراجع.`)) {
+                          bulkDeleteMutation.mutate(Array.from(selectedIds));
+                        }
+                      }}
+                    >
+                      <Trash2 className="ml-2 h-4 w-4" /> حذف المحدد ({selectedIds.size})
+                    </Button>
+                  )}
+                </>
+              )}
               <Button variant="outline" onClick={exportToExcel}>
                 <FileSpreadsheet className="ml-2 h-4 w-4" /> تصدير Excel
               </Button>
@@ -469,6 +518,19 @@ const Products = () => {
                   <Card key={product.id} className="overflow-hidden">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-2 mb-2">
+                        {canEditProducts && (
+                          <Checkbox
+                            checked={selectedIds.has(product.id)}
+                            onCheckedChange={(checked) => {
+                              setSelectedIds((prev) => {
+                                const next = new Set(prev);
+                                if (checked) next.add(product.id); else next.delete(product.id);
+                                return next;
+                              });
+                            }}
+                            className="mt-1"
+                          />
+                        )}
                         <Tag className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <h3 className="font-bold truncate">{product.name}</h3>
