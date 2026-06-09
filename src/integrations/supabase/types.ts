@@ -763,6 +763,7 @@ export type Database = {
           delivered_at: string | null
           delivery_agent_id: string | null
           discount: number
+          extra_number: string | null
           governorate: string | null
           governorate_id: string | null
           id: string
@@ -805,6 +806,7 @@ export type Database = {
           delivered_at?: string | null
           delivery_agent_id?: string | null
           discount?: number
+          extra_number?: string | null
           governorate?: string | null
           governorate_id?: string | null
           id?: string
@@ -847,6 +849,7 @@ export type Database = {
           delivered_at?: string | null
           delivery_agent_id?: string | null
           discount?: number
+          extra_number?: string | null
           governorate?: string | null
           governorate_id?: string | null
           id?: string
