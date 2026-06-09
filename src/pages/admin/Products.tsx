@@ -609,7 +609,8 @@ const Products = () => {
                   </Card>
                 ))}
               </div>
-            )}
+            );
+            })()}
           </CardContent>
         </Card>
       </div>
