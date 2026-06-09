@@ -111,6 +111,11 @@ const ScannerInvoice = () => {
       toast({ title: "اسم العميل ورقم الهاتف مطلوبان", variant: "destructive" });
       return;
     }
+    const phoneDigits = form.customer_phone.replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/\D/g, "");
+    if (phoneDigits.length !== 11) {
+      toast({ title: "رقم الهاتف غير صحيح", description: "لازم يكون 11 رقم بالظبط", variant: "destructive" });
+      return;
+    }
     setSaving(true);
     try {
       const { data: order, error } = await supabase
