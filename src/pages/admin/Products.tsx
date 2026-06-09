@@ -135,6 +135,25 @@ const Products = () => {
     onError: () => toast.error("حدث خطأ أثناء الحذف")
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      if (!ids.length) return 0;
+      await supabase.from("product_images").delete().in("product_id", ids);
+      await supabase.from("product_color_variants").delete().in("product_id", ids);
+      await supabase.from("order_items").update({ product_id: null }).in("product_id", ids);
+      await supabase.from("analytics_events").update({ product_id: null }).in("product_id", ids);
+      const { error } = await supabase.from("products").delete().in("id", ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      setSelectedIds(new Set());
+      toast.success(`تم حذف ${count} منتج`);
+    },
+    onError: (e: any) => toast.error(e?.message || "فشل الحذف الجماعي"),
+  });
+
   const resetForm = () => {
     setOpen(false);
     setFormData({
