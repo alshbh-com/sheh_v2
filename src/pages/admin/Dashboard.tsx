@@ -51,6 +51,7 @@ const adminSections = [
   { title: "سجل النشاط", description: "عرض سجل جميع العمليات", icon: Activity, path: "/admin/activity", color: "text-slate-500", permission: "user_management" },
   { title: "المظهر", description: "الألوان والقوالب واسم المنصة", icon: Palette, path: "/admin/appearance", color: "text-fuchsia-500", permission: "user_management" },
   { title: "المكاتب", description: "إدارة المكاتب والفروع", icon: Building2, path: "/admin/offices", color: "text-sky-500", permission: "user_management" },
+  { title: "مساحة التخزين", description: "المساحة المتاحة من حصة Supabase المجانية", icon: Wallet, path: "/admin/storage", color: "text-emerald-600", permission: "user_management" },
 ];
 
 const LOW_STOCK_THRESHOLD = 1;
