@@ -234,25 +234,33 @@ const Products = () => {
       const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
       if (!rows.length) throw new Error("الملف فارغ");
 
+      const norm = (s: any) => s.toString().trim().toLowerCase().replace(/[()\[\]]/g, " ").replace(/\s+/g, " ").trim();
       const pick = (row: any, keys: string[]) => {
+        const rowKeys = Object.keys(row);
         for (const k of keys) {
-          const found = Object.keys(row).find(
-            (x) => x.toString().trim().toLowerCase() === k.toLowerCase()
-          );
+          const nk = norm(k);
+          const found = rowKeys.find((x) => {
+            const nx = norm(x);
+            return nx === nk || nx.includes(nk) || nk.includes(nx);
+          });
           if (found && row[found] !== "" && row[found] !== null && row[found] !== undefined) return row[found];
         }
         return null;
       };
 
+      const seen = new Set<string>();
       const payload = rows
         .map((r) => {
           const name = pick(r, ["الاسم", "اسم المنتج", "name", "product name"]);
-          const code = pick(r, ["رمز المنتج", "الكود", "كود", "code", "كود المنتج"]);
+          const code = pick(r, ["رمز المنتج", "sku", "الكود", "كود", "code", "كود المنتج"]);
           const price = pick(r, ["سعر التخفيض", "السعر", "السعر الرئيسي", "price"]);
           if (!name || !code) return null;
+          const codeStr = String(code).trim();
+          if (seen.has(codeStr)) return null;
+          seen.add(codeStr);
           return {
             name: String(name).trim(),
-            code: String(code).trim(),
+            code: codeStr,
             barcode: (pick(r, ["الباركود", "barcode"]) || null)?.toString().trim() || null,
             price: parseFloat(price) || 0,
             sale_price: parseFloat(price) || 0,
