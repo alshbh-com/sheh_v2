@@ -518,6 +518,19 @@ const Products = () => {
                   <Card key={product.id} className="overflow-hidden">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-2 mb-2">
+                        {canEditProducts && (
+                          <Checkbox
+                            checked={selectedIds.has(product.id)}
+                            onCheckedChange={(checked) => {
+                              setSelectedIds((prev) => {
+                                const next = new Set(prev);
+                                if (checked) next.add(product.id); else next.delete(product.id);
+                                return next;
+                              });
+                            }}
+                            className="mt-1"
+                          />
+                        )}
                         <Tag className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <h3 className="font-bold truncate">{product.name}</h3>
