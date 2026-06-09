@@ -292,6 +292,14 @@ const Products = () => {
                 <FileSpreadsheet className="ml-2 h-4 w-4" /> تصدير Excel
               </Button>
               {canEditProducts && (
+                <>
+                  <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileChange} />
+                  <Button variant="outline" onClick={handleImportClick} disabled={importMutation.isPending}>
+                    <Upload className="ml-2 h-4 w-4" /> {importMutation.isPending ? "جاري الاستيراد..." : "استيراد Excel"}
+                  </Button>
+                </>
+              )}
+              {canEditProducts && (
                 <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) resetForm(); else setOpen(isOpen); }}>
                   <DialogTrigger asChild>
                     <Button><Plus className="ml-2 h-4 w-4" /> إضافة منتج</Button>
