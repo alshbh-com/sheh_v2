@@ -241,7 +241,7 @@ const Products = () => {
         })
         .filter(Boolean);
 
-      if (!payload.length) throw new Error("لم يتم العثور على منتجات صالحة (مطلوب: الاسم، الكود، السعر)");
+      if (!payload.length) throw new Error("لم يتم العثور على منتجات صالحة (مطلوب: الاسم، رمز المنتج، سعر التخفيض)");
 
       let inserted = 0, updated = 0, failed = 0;
       for (const p of payload as any[]) {
