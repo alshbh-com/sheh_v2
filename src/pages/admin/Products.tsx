@@ -308,7 +308,35 @@ const Products = () => {
                 <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">مشاهدة فقط</span>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {canEditProducts && products && products.length > 0 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (selectedIds.size === products.length) setSelectedIds(new Set());
+                      else setSelectedIds(new Set(products.map((p: any) => p.id)));
+                    }}
+                  >
+                    {selectedIds.size === products.length ? "إلغاء التحديد" : "تحديد الكل"}
+                  </Button>
+                  {selectedIds.size > 0 && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={bulkDeleteMutation.isPending}
+                      onClick={() => {
+                        if (confirm(`حذف ${selectedIds.size} منتج؟ لا يمكن التراجع.`)) {
+                          bulkDeleteMutation.mutate(Array.from(selectedIds));
+                        }
+                      }}
+                    >
+                      <Trash2 className="ml-2 h-4 w-4" /> حذف المحدد ({selectedIds.size})
+                    </Button>
+                  )}
+                </>
+              )}
               <Button variant="outline" onClick={exportToExcel}>
                 <FileSpreadsheet className="ml-2 h-4 w-4" /> تصدير Excel
               </Button>
