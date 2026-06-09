@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, Plus, ArrowLeft, Edit, Tag, X, Printer } from "lucide-react";
+import { Trash2, Plus, ArrowLeft, Edit, Tag, X, Printer, FileSpreadsheet } from "lucide-react";
+import * as XLSX from "xlsx";
 import { printProductLabel } from "@/lib/printProductLabel";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -30,6 +31,8 @@ const Products = () => {
     description: "",
     price: "",
     purchase_price: "",
+    wholesale_price: "",
+    wholesale_code: "",
     offer_price: "",
     stock: "",
     is_offer: false,
@@ -84,6 +87,8 @@ const Products = () => {
         price: parseFloat(data.price) || 0,
         sale_price: parseFloat(data.price) || 0,
         purchase_price: parseFloat(data.purchase_price) || 0,
+        wholesale_price: data.wholesale_price ? parseFloat(data.wholesale_price) : null,
+        wholesale_code: data.wholesale_code?.trim() || null,
         offer_price: data.offer_price ? parseFloat(data.offer_price) : null,
         is_offer: !!data.is_offer,
         stock: parseInt(data.stock) || 0,
@@ -131,7 +136,8 @@ const Products = () => {
   const resetForm = () => {
     setOpen(false);
     setFormData({
-      name: "", code: "", barcode: "", description: "", price: "", purchase_price: "", offer_price: "", stock: "",
+      name: "", code: "", barcode: "", description: "", price: "", purchase_price: "",
+      wholesale_price: "", wholesale_code: "", offer_price: "", stock: "",
       is_offer: false, category_id: "", size_options: [], color_options: [],
       quantity_pricing: Array.from({ length: 12 }, (_, i) => ({ quantity: i + 1, price: "" }))
     });
@@ -154,6 +160,8 @@ const Products = () => {
       description: product.description || "",
       price: product.price?.toString() || "",
       purchase_price: product.purchase_price?.toString() || "",
+      wholesale_price: product.wholesale_price?.toString() || "",
+      wholesale_code: product.wholesale_code || "",
       offer_price: product.offer_price?.toString() || "",
       stock: product.stock?.toString() || "",
       is_offer: !!product.is_offer,
@@ -168,6 +176,30 @@ const Products = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createMutation.mutate(formData);
+  };
+
+  const exportToExcel = () => {
+    if (!products || products.length === 0) {
+      toast.error("لا توجد منتجات للتصدير");
+      return;
+    }
+    const rows = products.map((p: any) => ({
+      "الكود": p.code || "",
+      "الباركود": p.barcode || "",
+      "اسم المنتج": p.name || "",
+      "السعر": Number(p.price || 0),
+      "سعر العرض": p.offer_price ? Number(p.offer_price) : "",
+      "تكلفة المنتج": Number(p.purchase_price || 0),
+      "سعر الجملة": p.wholesale_price ? Number(p.wholesale_price) : "",
+      "كود الجملة": p.wholesale_code || "",
+      "الكمية المتاحة": Number(p.stock || 0),
+      "نشط": p.is_active ? "نعم" : "لا",
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "المنتجات");
+    XLSX.writeFile(wb, `products-${new Date().toISOString().split("T")[0]}.xlsx`);
+    toast.success("تم تصدير قائمة المنتجات");
   };
 
   if (isLoading) return <div className="p-8">جاري التحميل...</div>;
