@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, Plus, ArrowLeft, Edit, Tag, X, Printer, FileSpreadsheet } from "lucide-react";
+import { Trash2, Plus, ArrowLeft, Edit, Tag, X, Printer, FileSpreadsheet, Upload } from "lucide-react";
+import { useRef } from "react";
 import * as XLSX from "xlsx";
 import { printProductLabel } from "@/lib/printProductLabel";
 import { Badge } from "@/components/ui/badge";
@@ -202,7 +203,74 @@ const Products = () => {
     toast.success("تم تصدير قائمة المنتجات");
   };
 
-  if (isLoading) return <div className="p-8">جاري التحميل...</div>;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const importMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
+      if (!rows.length) throw new Error("الملف فارغ");
+
+      const pick = (row: any, keys: string[]) => {
+        for (const k of keys) {
+          const found = Object.keys(row).find(
+            (x) => x.toString().trim().toLowerCase() === k.toLowerCase()
+          );
+          if (found && row[found] !== "" && row[found] !== null && row[found] !== undefined) return row[found];
+        }
+        return null;
+      };
+
+      const payload = rows
+        .map((r) => {
+          const name = pick(r, ["اسم المنتج", "الاسم", "name", "product name"]);
+          const code = pick(r, ["الكود", "كود", "code", "كود المنتج"]);
+          const price = pick(r, ["السعر", "السعر الرئيسي", "price"]);
+          if (!name || !code) return null;
+          return {
+            name: String(name).trim(),
+            code: String(code).trim(),
+            barcode: (pick(r, ["الباركود", "barcode"]) || null)?.toString().trim() || null,
+            price: parseFloat(price) || 0,
+            sale_price: parseFloat(price) || 0,
+            stock: parseInt(pick(r, ["الكمية", "الكمية المتاحة", "stock", "quantity"]) || "0") || 0,
+            quantity_pricing: {},
+          };
+        })
+        .filter(Boolean);
+
+      if (!payload.length) throw new Error("لم يتم العثور على منتجات صالحة (مطلوب: الاسم، الكود، السعر)");
+
+      let inserted = 0, updated = 0, failed = 0;
+      for (const p of payload as any[]) {
+        const { data: existing } = await supabase.from("products").select("id").eq("code", p.code).maybeSingle();
+        if (existing) {
+          const { error } = await supabase.from("products").update(p).eq("id", existing.id);
+          if (error) failed++; else updated++;
+        } else {
+          const { error } = await supabase.from("products").insert(p);
+          if (error) failed++; else inserted++;
+        }
+      }
+      return { inserted, updated, failed, total: payload.length };
+    },
+    onSuccess: (r) => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success(`تم الاستيراد: ${r.inserted} جديد، ${r.updated} تحديث${r.failed ? `، ${r.failed} فشل` : ""}`);
+    },
+    onError: (e: any) => toast.error(e?.message || "فشل الاستيراد"),
+  });
+
+  const handleImportClick = () => fileInputRef.current?.click();
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) importMutation.mutate(f);
+    e.target.value = "";
+  };
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-accent/20 py-8">
@@ -223,6 +291,14 @@ const Products = () => {
               <Button variant="outline" onClick={exportToExcel}>
                 <FileSpreadsheet className="ml-2 h-4 w-4" /> تصدير Excel
               </Button>
+              {canEditProducts && (
+                <>
+                  <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileChange} />
+                  <Button variant="outline" onClick={handleImportClick} disabled={importMutation.isPending}>
+                    <Upload className="ml-2 h-4 w-4" /> {importMutation.isPending ? "جاري الاستيراد..." : "استيراد Excel"}
+                  </Button>
+                </>
+              )}
               {canEditProducts && (
                 <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) resetForm(); else setOpen(isOpen); }}>
                   <DialogTrigger asChild>
