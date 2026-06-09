@@ -1504,6 +1504,7 @@ export type Database = {
         Returns: undefined
       }
       delete_old_activity_logs: { Args: never; Returns: undefined }
+      get_storage_usage: { Args: never; Returns: Json }
       normalize_order_code: { Args: { _value: string }; Returns: string }
       preview_next_order_code: { Args: never; Returns: string }
       reserve_next_order_code: { Args: never; Returns: string }
