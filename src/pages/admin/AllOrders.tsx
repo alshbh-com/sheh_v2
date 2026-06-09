@@ -34,6 +34,7 @@ const AllOrders = () => {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [governorateFilter, setGovernorateFilter] = useState<string>("all");
+  const [agentFilter, setAgentFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [editingStatus, setEditingStatus] = useState<{orderId: string, currentStatus: string} | null>(null);
   
@@ -88,6 +89,19 @@ const AllOrders = () => {
       
       if (error) throw error;
       return data;
+    },
+  });
+
+  const { data: agentsList } = useQuery({
+    queryKey: ["agents-for-filter"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("delivery_agents")
+        .select("id, name")
+        .eq("is_deleted", false)
+        .order("name");
+      if (error) throw error;
+      return data || [];
     },
   });
 
@@ -384,6 +398,10 @@ const AllOrders = () => {
     }
     if (governorateFilter !== "all" && order.customers?.governorate !== governorateFilter) {
       return false;
+    }
+    if (agentFilter !== "all") {
+      if (agentFilter === "none" && order.delivery_agent_id) return false;
+      if (agentFilter !== "none" && order.delivery_agent_id !== agentFilter) return false;
     }
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
