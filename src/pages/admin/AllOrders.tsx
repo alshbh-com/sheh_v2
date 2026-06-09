@@ -507,6 +507,21 @@ const AllOrders = () => {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">فلتر حسب المندوب:</span>
+                <Select value={agentFilter} onValueChange={setAgentFilter}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="جميع المناديب" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">جميع المناديب</SelectItem>
+                    <SelectItem value="none">بدون مندوب</SelectItem>
+                    {agentsList?.map((a: any) => (
+                      <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
