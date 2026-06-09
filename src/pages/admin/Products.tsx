@@ -255,6 +255,8 @@ const Products = () => {
           const code = pick(r, ["رمز المنتج", "sku", "الكود", "كود", "code", "كود المنتج"]);
           const price = pick(r, ["سعر التخفيض", "السعر", "السعر الرئيسي", "price"]);
           if (!name || !code) return null;
+          const priceNum = parseFloat(String(price ?? "").replace(/,/g, ""));
+          if (!priceNum || priceNum <= 0) return null;
           const codeStr = String(code).trim();
           if (seen.has(codeStr)) return null;
           seen.add(codeStr);
@@ -262,15 +264,15 @@ const Products = () => {
             name: String(name).trim(),
             code: codeStr,
             barcode: (pick(r, ["الباركود", "barcode"]) || null)?.toString().trim() || null,
-            price: parseFloat(price) || 0,
-            sale_price: parseFloat(price) || 0,
+            price: priceNum,
+            sale_price: priceNum,
             stock: parseInt(pick(r, ["الكمية", "الكمية المتاحة", "stock", "quantity"]) || "0") || 0,
             quantity_pricing: {},
           };
         })
         .filter(Boolean);
 
-      if (!payload.length) throw new Error("لم يتم العثور على منتجات صالحة (مطلوب: الاسم، رمز المنتج، سعر التخفيض)");
+      if (!payload.length) throw new Error("لم يتم العثور على منتجات صالحة (مطلوب: الاسم، رمز المنتج، وسعر أكبر من صفر)");
 
       let inserted = 0, updated = 0, failed = 0;
       for (const p of payload as any[]) {
