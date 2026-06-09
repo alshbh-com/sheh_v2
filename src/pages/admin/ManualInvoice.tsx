@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowRight, Printer, Save } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowRight, Printer, Save, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import InvoiceTemplate, { InvoiceData, InvoiceLine } from "@/components/admin/InvoiceTemplate";
@@ -17,10 +20,32 @@ const todayStr = () => {
 
 const duplicateCodeMessage = "الرقم مستخدم قبل كده في فاتورة/أوردر تاني. اكتب رقم مختلف.";
 
+const normalizePhone = (s: string) => (s || "").replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/\D/g, "");
+
+const downloadInvoicePng = async (filename: string) => {
+  try {
+    const el = document.getElementById("invoice-print");
+    if (!el) return;
+    const html2canvas = (await import("html2canvas")).default;
+    const canvas = await html2canvas(el, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+    const url = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${filename}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } catch (e) {
+    console.error("png export failed", e);
+  }
+};
+
 const ManualInvoice = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState<any[]>([]);
+  const [governorates, setGovernorates] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  const [scratch, setScratch] = useState("");
   const [data, setData] = useState<InvoiceData>({
     invoiceNumber: "",
     date: todayStr(),
@@ -30,21 +55,24 @@ const ManualInvoice = () => {
     governorate: "",
     accountName: "",
     pageCode: "",
+    extraNumber: "",
     notes: "",
     shipping: 0,
     lines: [emptyLine(), emptyLine()],
   });
 
-
-  // Load all products once for fast in-memory lookup (1000+ supported)
   useEffect(() => {
     (async () => {
-      const { data: ps } = await supabase
-        .from("products")
-        .select("id, code, barcode, name, price, sale_price, color, size")
-        .eq("is_active", true)
-        .limit(5000);
+      const [{ data: ps }, { data: gs }] = await Promise.all([
+        supabase
+          .from("products")
+          .select("id, code, barcode, name, price, sale_price, color, size, wholesale_price, wholesale_code")
+          .eq("is_active", true)
+          .limit(5000),
+        supabase.from("governorates").select("id, name, shipping_cost").order("name"),
+      ]);
       setProducts(ps || []);
+      setGovernorates(gs || []);
     })();
   }, []);
 
@@ -54,7 +82,6 @@ const ManualInvoice = () => {
     return String(nextCode || "");
   };
 
-  // Get next invoice number suggestion from the order-number sequence
   useEffect(() => {
     (async () => {
       try {
@@ -69,17 +96,27 @@ const ManualInvoice = () => {
   const productIndex = useMemo(() => {
     const byCode = new Map<string, any>();
     const byBarcode = new Map<string, any>();
+    const byWholesale = new Map<string, any>();
     products.forEach((p) => {
       if (p.code) byCode.set(String(p.code).trim().toLowerCase(), p);
       if (p.barcode) byBarcode.set(String(p.barcode).trim().toLowerCase(), p);
+      if (p.wholesale_code) byWholesale.set(String(p.wholesale_code).trim().toLowerCase(), p);
     });
-    return { byCode, byBarcode };
+    return { byCode, byBarcode, byWholesale };
   }, [products]);
+
+  const findProduct = (raw: string) => {
+    const key = raw.trim().toLowerCase();
+    if (!key) return { p: null as any, isWholesale: false };
+    if (productIndex.byWholesale.has(key)) {
+      return { p: productIndex.byWholesale.get(key), isWholesale: true };
+    }
+    return { p: productIndex.byCode.get(key) || productIndex.byBarcode.get(key), isWholesale: false };
+  };
 
   const handleCodeBlur = (rowIndex: number, code: string) => {
     if (!code) return;
-    const key = code.trim().toLowerCase();
-    const p = productIndex.byCode.get(key) || productIndex.byBarcode.get(key);
+    const { p, isWholesale } = findProduct(code);
     if (!p) {
       toast({ title: "المنتج غير موجود", description: `لا يوجد منتج بكود ${code}`, variant: "destructive" });
       return;
@@ -87,19 +124,26 @@ const ManualInvoice = () => {
     setData((d) => {
       const lines = [...d.lines];
       const cur = lines[rowIndex] || emptyLine();
+      const price = isWholesale && p.wholesale_price
+        ? Number(p.wholesale_price)
+        : Number(p.sale_price || p.price || 0);
       lines[rowIndex] = {
         ...cur,
         code: p.code,
-        name: p.name,
+        name: p.name + (isWholesale ? " (جملة)" : ""),
         color: p.color || cur.color || "",
         size: p.size || cur.size || "",
-        price: Number(p.sale_price || p.price || 0),
+        price,
         qty: cur.qty || 1,
       };
-      // لا نضيف صفوف تلقائياً — المستخدم يضيف/يحذف يدوياً بزر + / −
       return { ...d, lines };
     });
+  };
 
+  const handleGovernorateChange = (govId: string) => {
+    const g = governorates.find((x) => x.id === govId);
+    if (!g) return;
+    setData((d) => ({ ...d, governorate: g.name, shipping: Number(g.shipping_cost) || 0 }));
   };
 
   const filledLines = () => data.lines.filter((l) => l.code && l.qty > 0);
@@ -116,22 +160,26 @@ const ManualInvoice = () => {
     return checks.some(({ data: rows }) => rows && rows.length > 0);
   };
 
+  const validate = (): string | null => {
+    if (filledLines().length === 0) return "أضف منتج واحد على الأقل";
+    if (!data.customerName.trim()) return "اسم العميل مطلوب";
+    const phone = normalizePhone(data.customerPhone);
+    if (phone.length !== 11) return "رقم الهاتف لازم يكون 11 رقم بالظبط";
+    if (scratch.trim().length > 0) return "صندوق النسخ يجب أن يكون فارغًا قبل حفظ الأوردر";
+    return null;
+  };
+
   const save = async (thenPrint = false) => {
-    const items = filledLines();
-    if (items.length === 0) {
-      toast({ title: "أضف منتج واحد على الأقل", variant: "destructive" });
-      return;
-    }
-    if (!data.customerName || !data.customerPhone) {
-      toast({ title: "اسم العميل ورقم الهاتف مطلوبان", variant: "destructive" });
+    const err = validate();
+    if (err) {
+      toast({ title: "تنبيه", description: err, variant: "destructive" });
       return;
     }
     setSaving(true);
     try {
+      const items = filledLines();
       const subtotal = items.reduce((s, l) => s + l.qty * l.price, 0);
       const shipping = Number(data.shipping) || 0;
-      // Keep total_amount as products-only. Shipping is stored separately in shipping_cost
-      // and added once in order/agent reports.
 
       const invoiceCode = data.invoiceNumber.trim();
       const pageCode = (data.pageCode || "").trim();
@@ -154,10 +202,11 @@ const ManualInvoice = () => {
           ...(invoiceCode ? { invoice_number: invoiceCode, order_number: invoiceCode } : {}),
           manual_code: pageCode || null,
           ...(pageCode || invoiceCode ? { tracking_code: pageCode || invoiceCode } : {}),
+          extra_number: (data.extraNumber || "").trim() || null,
           account_name: data.accountName || null,
           governorate: data.governorate || null,
           customer_name: data.customerName,
-          customer_phone: data.customerPhone,
+          customer_phone: normalizePhone(data.customerPhone),
           customer_address: data.customerAddress,
           notes: data.notes,
           subtotal,
@@ -166,14 +215,13 @@ const ManualInvoice = () => {
           status: "pending",
           payment_status: "unpaid",
           source: "manual",
-        })
+        } as any)
         .select()
         .single();
       if (error) throw error;
 
-
       const itemRows = items.map((l) => {
-        const p = productIndex.byCode.get(String(l.code).trim().toLowerCase());
+        const { p } = findProduct(l.code);
         return {
           order_id: order.id,
           product_id: p?.id || null,
@@ -190,13 +238,16 @@ const ManualInvoice = () => {
       await supabase.from("order_items").insert(itemRows);
 
       const savedInvoiceNumber = String(order.invoice_number || order.order_number || invoiceCode || "");
+
+      // Auto-download PNG of the current invoice (before resetting)
+      await downloadInvoicePng(`invoice-${savedInvoiceNumber}`);
+
       const savedOrder = { ...order, invoice_number: savedInvoiceNumber, order_number: savedInvoiceNumber, order_items: itemRows };
 
       toast({ title: "تم حفظ الفاتورة بنجاح", description: `رقم الفاتورة: ${savedInvoiceNumber}` });
       if (thenPrint) {
         await printInvoiceTemplate([savedOrder] as any, { markPrinted: false, copies: 2 });
       }
-      // ابقَ على نفس الصفحة — جهّز فاتورة جديدة فارغة
       let nextInvoiceNumber = "";
       try {
         nextInvoiceNumber = await getNextInvoiceNumber();
@@ -205,10 +256,11 @@ const ManualInvoice = () => {
         invoiceNumber: nextInvoiceNumber,
         date: todayStr(),
         customerName: "", customerPhone: "", customerAddress: "",
-        governorate: "", accountName: "", pageCode: "",
+        governorate: "", accountName: "", pageCode: "", extraNumber: "",
         notes: "",
         shipping: 0, lines: [emptyLine(), emptyLine()],
       });
+      setScratch("");
     } catch (e: any) {
       const isDuplicate = e?.code === "23505" || String(e?.message || "").includes("duplicate_order_code") || String(e?.message || "").includes("duplicate key");
       toast({ title: isDuplicate ? "رقم مكرر" : "خطأ في الحفظ", description: isDuplicate ? duplicateCodeMessage : e.message, variant: "destructive" });
@@ -220,15 +272,14 @@ const ManualInvoice = () => {
   return (
     <div className="min-h-screen bg-background py-6" dir="rtl">
       <div className="max-w-4xl mx-auto px-4">
-        {/* Toolbar (hidden on print) */}
         <div className="no-print flex items-center justify-between mb-4">
           <Button variant="ghost" onClick={() => navigate("/admin")}>
             <ArrowRight className="ml-2 h-4 w-4" /> رجوع
           </Button>
           <h1 className="text-xl font-bold">إضافة فاتورة يدوية</h1>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => window.print()}>
-              <Printer className="ml-2 h-4 w-4" /> طباعة
+            <Button variant="outline" onClick={() => downloadInvoicePng(`invoice-${data.invoiceNumber || "draft"}`)}>
+              <Download className="ml-2 h-4 w-4" /> حفظ كصورة
             </Button>
             <Button onClick={() => save(false)} disabled={saving}>
               <Save className="ml-2 h-4 w-4" /> حفظ
@@ -239,6 +290,26 @@ const ManualInvoice = () => {
           </div>
         </div>
 
+        {/* Governorate dropdown (auto-fills shipping) */}
+        <Card className="no-print p-3 mb-3 bg-primary/5 border-primary/20 flex flex-wrap items-end gap-3">
+          <div className="flex-1 min-w-[200px]">
+            <Label className="text-xs">المحافظة (تعبئة سعر الشحن تلقائياً)</Label>
+            <Select value={governorates.find(g => g.name === data.governorate)?.id || ""} onValueChange={handleGovernorateChange}>
+              <SelectTrigger><SelectValue placeholder="اختر المحافظة" /></SelectTrigger>
+              <SelectContent>
+                {governorates.map((g) => (
+                  <SelectItem key={g.id} value={g.id}>
+                    {g.name} — شحن: {Number(g.shipping_cost || 0).toFixed(0)} ج
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            تنبيه: رقم الهاتف لازم يكون 11 رقم. لكتابة سعر جملة استخدم كود الجملة بدل الكود العادي.
+          </div>
+        </Card>
+
         <Card className="p-4 bg-muted/30">
           <InvoiceTemplate
             data={data}
@@ -248,9 +319,20 @@ const ManualInvoice = () => {
           />
         </Card>
 
-        <p className="no-print text-xs text-muted-foreground mt-3 text-center">
-          نصيحة: اكتب كود المنتج واضغط Enter أو Tab — البيانات تتعبأ تلقائياً.
-        </p>
+        {/* Scratch box — must be empty before save */}
+        <Card className="no-print p-3 mt-3 bg-amber-50 border-amber-300">
+          <Label className="text-xs font-bold text-amber-800">صندوق النسخ المؤقت (لازم يبقى فارغ قبل الحفظ)</Label>
+          <Textarea
+            value={scratch}
+            onChange={(e) => setScratch(e.target.value)}
+            placeholder="انسخ هنا أي كلام عشان تلصقه في الخانات بعده. لازم تمسحه قبل ما تحفظ الأوردر."
+            className="bg-white"
+            rows={3}
+          />
+          {scratch.trim().length > 0 && (
+            <p className="text-xs text-red-600 mt-1 font-bold">⚠ الصندوق لسه فيه كلام — لن يتم حفظ الأوردر.</p>
+          )}
+        </Card>
       </div>
     </div>
   );
