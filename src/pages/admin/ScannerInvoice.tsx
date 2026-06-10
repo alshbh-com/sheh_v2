@@ -4,12 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ScanLine, ArrowRight, Trash2, Check, Printer } from "lucide-react";
+import { ScanLine, ArrowRight, Trash2, Check, Plus, Minus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { useBarcodeScanner } from "@/features/scanner/hooks/useBarcodeScanner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 type ScannedItem = {
   product_id: string;
@@ -17,7 +16,7 @@ type ScannedItem = {
   name: string;
   color: string;
   size: string;
-  price: number;
+  stock: number;
   qty: number;
 };
 
@@ -26,26 +25,17 @@ const ScannerInvoice = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [items, setItems] = useState<ScannedItem[]>([]);
   const [manualCode, setManualCode] = useState("");
-  const [agents, setAgents] = useState<any[]>([]);
   const [finishOpen, setFinishOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    customer_name: "",
-    customer_phone: "",
-    customer_address: "",
-    shipping: "0",
-    agent_id: "",
-    notes: "",
-  });
 
   useEffect(() => {
     (async () => {
-      const [{ data: ps }, { data: ag }] = await Promise.all([
-        supabase.from("products").select("id, code, barcode, name, price, sale_price, color, size").eq("is_active", true).limit(5000),
-        supabase.from("delivery_agents").select("id, name").eq("is_active", true).eq("is_deleted", false),
-      ]);
+      const { data: ps } = await supabase
+        .from("products")
+        .select("id, code, barcode, name, color, size, stock, quantity")
+        .eq("is_active", true)
+        .limit(5000);
       setProducts(ps || []);
-      setAgents(ag || []);
     })();
   }, []);
 
@@ -82,7 +72,7 @@ const ScannerInvoice = () => {
             name: p.name,
             color: p.color || "",
             size: p.size || "",
-            price: Number(p.sale_price || p.price || 0),
+            stock: Number(p.stock ?? p.quantity ?? 0),
             qty: 1,
           },
         ];
@@ -93,73 +83,37 @@ const ScannerInvoice = () => {
 
   useBarcodeScanner(addByCode, true);
 
-  const subtotal = items.reduce((s, it) => s + it.qty * it.price, 0);
-  const shipping = parseFloat(form.shipping) || 0;
-  const total = subtotal + shipping;
+  const totalQty = items.reduce((s, it) => s + it.qty, 0);
 
   const updateQty = (idx: number, delta: number) => {
     setItems((prev) => prev.map((x, i) => (i === idx ? { ...x, qty: Math.max(1, x.qty + delta) } : x)));
   };
+  const setQty = (idx: number, val: number) => {
+    setItems((prev) => prev.map((x, i) => (i === idx ? { ...x, qty: Math.max(1, val || 1) } : x)));
+  };
   const removeItem = (idx: number) => setItems((prev) => prev.filter((_, i) => i !== idx));
 
-  const save = async () => {
-    if (items.length === 0) {
-      toast({ title: "لا توجد منتجات مسكانة", variant: "destructive" });
-      return;
-    }
-    if (!form.customer_name || !form.customer_phone) {
-      toast({ title: "اسم العميل ورقم الهاتف مطلوبان", variant: "destructive" });
-      return;
-    }
-    const phoneDigits = form.customer_phone.replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/\D/g, "");
-    if (phoneDigits.length !== 11) {
-      toast({ title: "رقم الهاتف غير صحيح", description: "لازم يكون 11 رقم بالظبط", variant: "destructive" });
-      return;
-    }
+  const applyStock = async (mode: "add" | "subtract") => {
+    if (items.length === 0) return;
     setSaving(true);
     try {
-      const { data: order, error } = await supabase
-        .from("orders")
-        .insert({
-          // Let the DB trigger assign a unique order/invoice number to avoid duplicate-code errors
-          customer_name: form.customer_name,
-          customer_phone: form.customer_phone,
-          customer_address: form.customer_address,
-          notes: form.notes,
-          subtotal,
-          shipping_cost: shipping,
-          total_amount: subtotal,
-          status: form.agent_id ? "processing" : "pending",
-          payment_status: "unpaid",
-          source: "scanner",
-          delivery_agent_id: form.agent_id || null,
-          assigned_at: form.agent_id ? new Date().toISOString() : null,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-
-      await supabase.from("order_items").insert(
-        items.map((it) => ({
-          order_id: order.id,
-          product_id: it.product_id,
-          product_code: it.code,
-          product_name: it.name,
-          color: it.color,
-          size: it.size,
-          quantity: it.qty,
-          unit_price: it.price,
-          price: it.price,
-          total_price: it.qty * it.price,
-        }))
-      );
-
-      toast({ title: "تم إنشاء الفاتورة بنجاح" });
+      const sign = mode === "add" ? 1 : -1;
+      for (const it of items) {
+        const newStock = it.stock + sign * it.qty;
+        const { error } = await supabase
+          .from("products")
+          .update({ stock: newStock, quantity: newStock, updated_at: new Date().toISOString() })
+          .eq("id", it.product_id);
+        if (error) throw error;
+      }
+      toast({
+        title: mode === "add" ? "تمت إضافة الكميات للمخزن" : "تم خصم الكميات من المخزن",
+        description: `${items.length} منتج / ${totalQty} قطعة`,
+      });
       setFinishOpen(false);
-      navigate(`/admin/orders`);
+      setItems([]);
     } catch (e: any) {
-      const isDup = e?.code === "23505" || String(e?.message || "").includes("duplicate_order_code");
-      toast({ title: "خطأ", description: isDup ? "حدث تعارض في رقم الفاتورة، حاول مرة أخرى." : e.message, variant: "destructive" });
+      toast({ title: "خطأ", description: e.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -173,7 +127,7 @@ const ScannerInvoice = () => {
         </Button>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <ScanLine className="h-6 w-6 text-primary" />
-          فاتورة بالـ Scanner (وضع المنتجات)
+          Scanner المنتجات (تعديل المخزون)
         </h1>
         <div className="w-20" />
       </div>
@@ -222,9 +176,8 @@ const ScannerInvoice = () => {
                   <th className="p-2 text-right">المنتج</th>
                   <th className="p-2">الكود</th>
                   <th className="p-2">اللون/المقاس</th>
-                  <th className="p-2">السعر</th>
+                  <th className="p-2">المخزون الحالي</th>
                   <th className="p-2">الكمية</th>
-                  <th className="p-2">الإجمالي</th>
                   <th></th>
                 </tr>
               </thead>
@@ -234,15 +187,19 @@ const ScannerInvoice = () => {
                     <td className="p-2 font-medium">{it.name}</td>
                     <td className="p-2 text-center">{it.code}</td>
                     <td className="p-2 text-center">{[it.color, it.size].filter(Boolean).join(" / ") || "-"}</td>
-                    <td className="p-2 text-center">{it.price}</td>
+                    <td className="p-2 text-center">{it.stock}</td>
                     <td className="p-2 text-center">
                       <div className="inline-flex items-center gap-1">
                         <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={() => updateQty(idx, -1)}>-</Button>
-                        <span className="w-8 text-center font-bold">{it.qty}</span>
+                        <Input
+                          type="number"
+                          value={it.qty}
+                          onChange={(e) => setQty(idx, parseInt(e.target.value))}
+                          className="w-16 h-7 text-center"
+                        />
                         <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={() => updateQty(idx, 1)}>+</Button>
                       </div>
                     </td>
-                    <td className="p-2 text-center font-bold">{it.qty * it.price}</td>
                     <td className="p-2">
                       <Button size="sm" variant="destructive" onClick={() => removeItem(idx)}>
                         <Trash2 className="h-4 w-4" />
@@ -253,8 +210,8 @@ const ScannerInvoice = () => {
               </tbody>
               <tfoot>
                 <tr className="font-bold">
-                  <td colSpan={5} className="p-2 text-left">إجمالي المنتجات:</td>
-                  <td className="p-2 text-center text-lg">{subtotal}</td>
+                  <td colSpan={4} className="p-2 text-left">إجمالي القطع:</td>
+                  <td className="p-2 text-center text-lg">{totalQty}</td>
                   <td />
                 </tr>
               </tfoot>
@@ -273,55 +230,42 @@ const ScannerInvoice = () => {
       </div>
 
       <Dialog open={finishOpen} onOpenChange={setFinishOpen}>
-        <DialogContent dir="rtl" className="max-w-lg">
+        <DialogContent dir="rtl" className="max-w-md">
           <DialogHeader>
-            <DialogTitle>إنهاء الفاتورة</DialogTitle>
+            <DialogTitle>تعديل المخزون</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <div>
-              <Label>اسم العميل *</Label>
-              <Input value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} />
+            <div className="rounded-md bg-muted p-3 text-sm space-y-1">
+              <div>عدد المنتجات: <b>{items.length}</b></div>
+              <div>إجمالي القطع: <b className="text-primary">{totalQty}</b></div>
             </div>
-            <div>
-              <Label>رقم الهاتف *</Label>
-              <Input value={form.customer_phone} onChange={(e) => setForm({ ...form, customer_phone: e.target.value })} />
-            </div>
-            <div>
-              <Label>العنوان</Label>
-              <Input value={form.customer_address} onChange={(e) => setForm({ ...form, customer_address: e.target.value })} />
-            </div>
+            <p className="text-sm text-muted-foreground">
+              اختر العملية المطلوبة. هتتطبق على المنتجات اللي تم اسكانها بالكميات الموضحة.
+            </p>
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>الشحن</Label>
-                <Input type="number" value={form.shipping} onChange={(e) => setForm({ ...form, shipping: e.target.value })} />
-              </div>
-              <div>
-                <Label>المندوب</Label>
-                <Select value={form.agent_id} onValueChange={(v) => setForm({ ...form, agent_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="اختر المندوب" /></SelectTrigger>
-                  <SelectContent>
-                    {agents.map((a) => (
-                      <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div>
-              <Label>ملاحظات</Label>
-              <Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-            </div>
-            <div className="rounded-md bg-muted p-3 text-sm">
-              <div>إجمالي المنتجات: <b>{subtotal}</b></div>
-              <div>الشحن: <b>{shipping}</b></div>
-              <div className="text-lg">الإجمالي النهائي: <b className="text-primary">{total}</b></div>
+              <Button
+                size="lg"
+                onClick={() => applyStock("add")}
+                disabled={saving}
+                className="h-20 bg-green-600 hover:bg-green-700 flex-col gap-1"
+              >
+                <Plus className="h-6 w-6" />
+                إضافة للمخزن
+              </Button>
+              <Button
+                size="lg"
+                onClick={() => applyStock("subtract")}
+                disabled={saving}
+                variant="destructive"
+                className="h-20 flex-col gap-1"
+              >
+                <Minus className="h-6 w-6" />
+                خصم من المخزن
+              </Button>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setFinishOpen(false)}>إلغاء</Button>
-            <Button onClick={save} disabled={saving}>
-              {saving ? "جاري الحفظ..." : "حفظ الفاتورة"}
-            </Button>
+            <Button variant="ghost" onClick={() => setFinishOpen(false)} disabled={saving}>إلغاء</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
