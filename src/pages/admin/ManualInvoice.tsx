@@ -416,12 +416,41 @@ const ManualInvoice = () => {
           </div>
         </Card>
 
+        {editingOrderId && (
+          <Card className="no-print p-3 mb-3 bg-amber-50 border-amber-300 flex items-center justify-between">
+            <div className="text-sm text-amber-800 font-bold">
+              ⚠ وضع التعديل: تقوم بتعديل فاتورة موجودة (#{data.invoiceNumber}). اضغط حفظ لتطبيق التغييرات.
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                setEditingOrderId(null);
+                try {
+                  const next = await getNextInvoiceNumber();
+                  setData({
+                    invoiceNumber: next,
+                    date: todayStr(),
+                    customerName: "", customerPhone: "", customerAddress: "",
+                    governorate: "", accountName: "", pageCode: "", extraNumber: "",
+                    notes: "",
+                    shipping: 0, lines: [emptyLine(), emptyLine()],
+                  });
+                } catch {}
+              }}
+            >
+              إلغاء التعديل
+            </Button>
+          </Card>
+        )}
+
         <Card className="p-4 bg-muted/30">
           <InvoiceTemplate
             data={data}
             editable
             onChange={setData}
             onCodeBlur={handleCodeBlur}
+            onInvoiceNumberBlur={handleInvoiceNumberBlur}
           />
         </Card>
 
