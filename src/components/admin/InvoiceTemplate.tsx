@@ -82,7 +82,7 @@ const POLICY_LINES = [
   "يتم دفع مصاريف الشحن في حاله الاستلام او لا و في حاله الاسترجاع العميل يتحمل الشحن",
 ];
 
-export default function InvoiceTemplate({ data, editable = false, onChange, onCodeBlur }: Props) {
+export default function InvoiceTemplate({ data, editable = false, onChange, onCodeBlur, onInvoiceNumberBlur }: Props) {
   const barcodeRef = useRef<SVGSVGElement>(null);
 
   // في وضع التحرير نعرض بالضبط الصفوف الموجودة (يضيف/يحذف المستخدم يدوياً).
