@@ -29,6 +29,7 @@ interface Props {
   editable?: boolean;
   onChange?: (next: InvoiceData) => void;
   onCodeBlur?: (rowIndex: number, code: string) => void;
+  onInvoiceNumberBlur?: (value: string) => void;
 }
 
 const ROW_COUNT = 6;
