@@ -43,7 +43,7 @@ const downloadInvoicePng = async (filename: string) => {
 
 const ManualInvoice = () => {
   const navigate = useNavigate();
-  const { currentUser } = useAdminAuth();
+  const { currentUser, logout } = useAdminAuth();
   const role = (currentUser as any)?.role;
   const isModerator = role === 'moderator';
   const isAdmin = !isModerator; // admin / owner / supervisor can edit existing
