@@ -346,7 +346,10 @@ const ManualInvoice = () => {
 
       const savedOrder = { ...order, invoice_number: savedInvoiceNumber, order_number: savedInvoiceNumber, order_items: itemRows };
 
-      toast({ title: "تم حفظ الفاتورة بنجاح", description: `رقم الفاتورة: ${savedInvoiceNumber}` });
+      toast({
+        title: editingOrderId ? "تم تحديث الفاتورة بنجاح" : "تم حفظ الفاتورة بنجاح",
+        description: `رقم الفاتورة: ${savedInvoiceNumber}`,
+      });
       if (thenPrint) {
         await printInvoiceTemplate([savedOrder] as any, { markPrinted: false, copies: 2 });
       }
@@ -354,6 +357,7 @@ const ManualInvoice = () => {
       try {
         nextInvoiceNumber = await getNextInvoiceNumber();
       } catch {}
+      setEditingOrderId(null);
       setData({
         invoiceNumber: nextInvoiceNumber,
         date: todayStr(),
