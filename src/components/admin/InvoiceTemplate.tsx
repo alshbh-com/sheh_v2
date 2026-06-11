@@ -163,7 +163,7 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
             <div className="border-l border-black p-1 text-center font-bold text-[12px]">فاتورة</div>
             <div className="border-l border-black p-1">
               {editable ? (
-                <input className={inputCls} value={data.invoiceNumber} onChange={(e) => update({ invoiceNumber: e.target.value })} placeholder="تلقائي" />
+                <input className={inputCls} value={data.invoiceNumber} onChange={(e) => update({ invoiceNumber: e.target.value })} onBlur={(e) => onInvoiceNumberBlur?.(e.target.value.trim())} placeholder="تلقائي" />
               ) : (
                 <div className="text-center">{data.invoiceNumber || "0"}</div>
               )}
