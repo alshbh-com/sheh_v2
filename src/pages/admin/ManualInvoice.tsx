@@ -152,6 +152,82 @@ const ManualInvoice = () => {
     setData((d) => ({ ...d, governorate: g.name, shipping: Number(g.shipping_cost) || 0 }));
   };
 
+  const findExistingOrder = async (code: string) => {
+    const value = code.trim();
+    if (!value) return null;
+    const fields = ["invoice_number", "order_number", "manual_code", "tracking_code"];
+    for (const f of fields) {
+      const { data: rows } = await (supabase as any)
+        .from("orders")
+        .select("*, order_items(*)")
+        .eq(f, value)
+        .limit(1);
+      if (rows && rows.length > 0) return rows[0];
+    }
+    return null;
+  };
+
+  const handleInvoiceNumberBlur = async (value: string) => {
+    const v = (value || "").trim();
+    if (!v) return;
+    // Same code as currently loaded edit target — skip
+    if (editingOrderId && v === data.invoiceNumber.trim()) return;
+    try {
+      const existing = await findExistingOrder(v);
+      if (!existing) {
+        // Clear any previous edit context
+        if (editingOrderId) setEditingOrderId(null);
+        return;
+      }
+      if (!isAdmin) {
+        toast({
+          title: "غير مسموح",
+          description: `الرقم ${v} مستخدم بالفعل في فاتورة أخرى. الموديريتور لا يمكنه تعديل الفواتير القديمة.`,
+          variant: "destructive",
+        });
+        // revert to a fresh preview number
+        try {
+          const nextCode = await getNextInvoiceNumber();
+          setData((d) => ({ ...d, invoiceNumber: nextCode }));
+        } catch {
+          setData((d) => ({ ...d, invoiceNumber: "" }));
+        }
+        return;
+      }
+      // Admin: load the existing invoice into the form for editing
+      const items = (existing.order_items || []).map((it: any) => ({
+        code: it.product_code || "",
+        name: it.product_name || "",
+        color: it.color || "",
+        size: it.size || "",
+        qty: Number(it.quantity || 1),
+        price: Number(it.unit_price || it.price || 0),
+      }));
+      const safeLines = items.length ? items : [emptyLine(), emptyLine()];
+      setEditingOrderId(existing.id);
+      setData({
+        invoiceNumber: String(existing.invoice_number || existing.order_number || v),
+        date: existing.created_at ? new Date(existing.created_at).toLocaleDateString("en-GB").replace(/\//g, "/") : todayStr(),
+        customerName: existing.customer_name || "",
+        customerPhone: existing.customer_phone || "",
+        customerAddress: existing.customer_address || "",
+        governorate: existing.governorate || "",
+        accountName: existing.account_name || "",
+        pageCode: existing.manual_code || "",
+        extraNumber: existing.extra_number || "",
+        notes: existing.notes || "",
+        shipping: Number(existing.shipping_cost || 0),
+        lines: safeLines,
+      });
+      toast({
+        title: "تم تحميل الفاتورة للتعديل",
+        description: `فاتورة #${existing.invoice_number || existing.order_number || v} — يمكنك التعديل ثم الحفظ.`,
+      });
+    } catch (e: any) {
+      console.error("invoice lookup failed", e);
+    }
+  };
+
   const filledLines = () => data.lines.filter((l) => l.code && l.qty > 0);
 
   const isCodeTaken = async (code: string) => {
@@ -163,7 +239,7 @@ const ManualInvoice = () => {
       (supabase as any).from("orders").select("id").eq("manual_code", value).limit(1),
       (supabase as any).from("orders").select("id").eq("tracking_code", value).limit(1),
     ]);
-    return checks.some(({ data: rows }) => rows && rows.length > 0);
+    return checks.some(({ data: rows }) => rows && rows.some((r: any) => r.id !== editingOrderId));
   };
 
   const validate = (): string | null => {
