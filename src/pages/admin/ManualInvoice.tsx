@@ -389,7 +389,7 @@ const ManualInvoice = () => {
             </Button>
           )}
           <h1 className="text-xl font-bold">{editingOrderId ? `تعديل فاتورة #${data.invoiceNumber}` : "إضافة فاتورة يدوية"}</h1>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button variant="outline" onClick={() => downloadInvoicePng(`invoice-${data.invoiceNumber || "draft"}`)}>
               <Download className="ml-2 h-4 w-4" /> حفظ كصورة
             </Button>
@@ -398,6 +398,9 @@ const ManualInvoice = () => {
             </Button>
             <Button onClick={() => save(true)} disabled={saving} variant="default">
               <Printer className="ml-2 h-4 w-4" /> حفظ وطباعة
+            </Button>
+            <Button variant="destructive" onClick={logout}>
+              <LogOut className="ml-2 h-4 w-4" /> تسجيل خروج
             </Button>
           </div>
         </div>
