@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import InvoiceTemplate, { InvoiceData, InvoiceLine } from "@/components/admin/InvoiceTemplate";
 import { printInvoiceTemplate } from "@/lib/printInvoiceTemplate";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
 
 const emptyLine = (): InvoiceLine => ({ code: "", name: "", color: "", size: "", qty: 1, price: 0 });
 
