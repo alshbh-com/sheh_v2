@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, Printer, Save, Download } from "lucide-react";
+import { ArrowRight, Printer, Save, Download, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import InvoiceTemplate, { InvoiceData, InvoiceLine } from "@/components/admin/InvoiceTemplate";
@@ -43,7 +43,7 @@ const downloadInvoicePng = async (filename: string) => {
 
 const ManualInvoice = () => {
   const navigate = useNavigate();
-  const { currentUser } = useAdminAuth();
+  const { currentUser, logout } = useAdminAuth();
   const role = (currentUser as any)?.role;
   const isModerator = role === 'moderator';
   const isAdmin = !isModerator; // admin / owner / supervisor can edit existing
@@ -379,9 +379,15 @@ const ManualInvoice = () => {
     <div className="min-h-screen bg-background py-6" dir="rtl">
       <div className="max-w-4xl mx-auto px-4">
         <div className="no-print flex items-center justify-between mb-4">
-          <Button variant="ghost" onClick={() => navigate("/admin")}>
-            <ArrowRight className="ml-2 h-4 w-4" /> رجوع
-          </Button>
+          {isModerator ? (
+            <Button variant="outline" onClick={logout}>
+              <LogOut className="ml-2 h-4 w-4" /> تسجيل خروج
+            </Button>
+          ) : (
+            <Button variant="ghost" onClick={() => navigate("/admin")}>
+              <ArrowRight className="ml-2 h-4 w-4" /> رجوع
+            </Button>
+          )}
           <h1 className="text-xl font-bold">{editingOrderId ? `تعديل فاتورة #${data.invoiceNumber}` : "إضافة فاتورة يدوية"}</h1>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => downloadInvoicePng(`invoice-${data.invoiceNumber || "draft"}`)}>
