@@ -29,6 +29,7 @@ interface Props {
   editable?: boolean;
   onChange?: (next: InvoiceData) => void;
   onCodeBlur?: (rowIndex: number, code: string) => void;
+  onInvoiceNumberBlur?: (value: string) => void;
 }
 
 const ROW_COUNT = 6;
@@ -81,7 +82,7 @@ const POLICY_LINES = [
   "يتم دفع مصاريف الشحن في حاله الاستلام او لا و في حاله الاسترجاع العميل يتحمل الشحن",
 ];
 
-export default function InvoiceTemplate({ data, editable = false, onChange, onCodeBlur }: Props) {
+export default function InvoiceTemplate({ data, editable = false, onChange, onCodeBlur, onInvoiceNumberBlur }: Props) {
   const barcodeRef = useRef<SVGSVGElement>(null);
 
   // في وضع التحرير نعرض بالضبط الصفوف الموجودة (يضيف/يحذف المستخدم يدوياً).
@@ -162,7 +163,7 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
             <div className="border-l border-black p-1 text-center font-bold text-[12px]">فاتورة</div>
             <div className="border-l border-black p-1">
               {editable ? (
-                <input className={inputCls} value={data.invoiceNumber} onChange={(e) => update({ invoiceNumber: e.target.value })} placeholder="تلقائي" />
+                <input className={inputCls} value={data.invoiceNumber} onChange={(e) => update({ invoiceNumber: e.target.value })} onBlur={(e) => onInvoiceNumberBlur?.(e.target.value.trim())} placeholder="تلقائي" />
               ) : (
                 <div className="text-center">{data.invoiceNumber || "0"}</div>
               )}

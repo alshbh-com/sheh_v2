@@ -63,9 +63,9 @@ const Dashboard = () => {
   useEffect(() => {
     if (currentUser) {
       logActivity('دخول لوحة التحكم', 'dashboard');
-      // Moderator users go straight to the manual orders gate
+      // Moderator users go straight to the invoice-style manual entry
       if ((currentUser as any).role === 'moderator') {
-        navigate('/admin/orders', { replace: true });
+        navigate('/admin/manual-invoice', { replace: true });
       }
     }
   }, [currentUser]);

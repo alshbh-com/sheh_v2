@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import InvoiceTemplate, { InvoiceData, InvoiceLine } from "@/components/admin/InvoiceTemplate";
 import { printInvoiceTemplate } from "@/lib/printInvoiceTemplate";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
 
 const emptyLine = (): InvoiceLine => ({ code: "", name: "", color: "", size: "", qty: 1, price: 0 });
 
@@ -42,9 +43,14 @@ const downloadInvoicePng = async (filename: string) => {
 
 const ManualInvoice = () => {
   const navigate = useNavigate();
+  const { currentUser } = useAdminAuth();
+  const role = (currentUser as any)?.role;
+  const isModerator = role === 'moderator';
+  const isAdmin = !isModerator; // admin / owner / supervisor can edit existing
   const [products, setProducts] = useState<any[]>([]);
   const [governorates, setGovernorates] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [scratch, setScratch] = useState("");
   const [data, setData] = useState<InvoiceData>({
     invoiceNumber: "",
@@ -146,6 +152,82 @@ const ManualInvoice = () => {
     setData((d) => ({ ...d, governorate: g.name, shipping: Number(g.shipping_cost) || 0 }));
   };
 
+  const findExistingOrder = async (code: string) => {
+    const value = code.trim();
+    if (!value) return null;
+    const fields = ["invoice_number", "order_number", "manual_code", "tracking_code"];
+    for (const f of fields) {
+      const { data: rows } = await (supabase as any)
+        .from("orders")
+        .select("*, order_items(*)")
+        .eq(f, value)
+        .limit(1);
+      if (rows && rows.length > 0) return rows[0];
+    }
+    return null;
+  };
+
+  const handleInvoiceNumberBlur = async (value: string) => {
+    const v = (value || "").trim();
+    if (!v) return;
+    // Same code as currently loaded edit target — skip
+    if (editingOrderId && v === data.invoiceNumber.trim()) return;
+    try {
+      const existing = await findExistingOrder(v);
+      if (!existing) {
+        // Clear any previous edit context
+        if (editingOrderId) setEditingOrderId(null);
+        return;
+      }
+      if (!isAdmin) {
+        toast({
+          title: "غير مسموح",
+          description: `الرقم ${v} مستخدم بالفعل في فاتورة أخرى. الموديريتور لا يمكنه تعديل الفواتير القديمة.`,
+          variant: "destructive",
+        });
+        // revert to a fresh preview number
+        try {
+          const nextCode = await getNextInvoiceNumber();
+          setData((d) => ({ ...d, invoiceNumber: nextCode }));
+        } catch {
+          setData((d) => ({ ...d, invoiceNumber: "" }));
+        }
+        return;
+      }
+      // Admin: load the existing invoice into the form for editing
+      const items = (existing.order_items || []).map((it: any) => ({
+        code: it.product_code || "",
+        name: it.product_name || "",
+        color: it.color || "",
+        size: it.size || "",
+        qty: Number(it.quantity || 1),
+        price: Number(it.unit_price || it.price || 0),
+      }));
+      const safeLines = items.length ? items : [emptyLine(), emptyLine()];
+      setEditingOrderId(existing.id);
+      setData({
+        invoiceNumber: String(existing.invoice_number || existing.order_number || v),
+        date: existing.created_at ? new Date(existing.created_at).toLocaleDateString("en-GB").replace(/\//g, "/") : todayStr(),
+        customerName: existing.customer_name || "",
+        customerPhone: existing.customer_phone || "",
+        customerAddress: existing.customer_address || "",
+        governorate: existing.governorate || "",
+        accountName: existing.account_name || "",
+        pageCode: existing.manual_code || "",
+        extraNumber: existing.extra_number || "",
+        notes: existing.notes || "",
+        shipping: Number(existing.shipping_cost || 0),
+        lines: safeLines,
+      });
+      toast({
+        title: "تم تحميل الفاتورة للتعديل",
+        description: `فاتورة #${existing.invoice_number || existing.order_number || v} — يمكنك التعديل ثم الحفظ.`,
+      });
+    } catch (e: any) {
+      console.error("invoice lookup failed", e);
+    }
+  };
+
   const filledLines = () => data.lines.filter((l) => l.code && l.qty > 0);
 
   const isCodeTaken = async (code: string) => {
@@ -157,7 +239,7 @@ const ManualInvoice = () => {
       (supabase as any).from("orders").select("id").eq("manual_code", value).limit(1),
       (supabase as any).from("orders").select("id").eq("tracking_code", value).limit(1),
     ]);
-    return checks.some(({ data: rows }) => rows && rows.length > 0);
+    return checks.some(({ data: rows }) => rows && rows.some((r: any) => r.id !== editingOrderId));
   };
 
   const validate = (): string | null => {
@@ -196,29 +278,49 @@ const ManualInvoice = () => {
         }
       }
 
-      const { data: order, error } = await supabase
-        .from("orders")
-        .insert({
-          ...(invoiceCode ? { invoice_number: invoiceCode, order_number: invoiceCode } : {}),
-          manual_code: pageCode || null,
-          ...(pageCode || invoiceCode ? { tracking_code: pageCode || invoiceCode } : {}),
-          extra_number: (data.extraNumber || "").trim() || null,
-          account_name: data.accountName || null,
-          governorate: data.governorate || null,
-          customer_name: data.customerName,
-          customer_phone: normalizePhone(data.customerPhone),
-          customer_address: data.customerAddress,
-          notes: data.notes,
-          subtotal,
-          shipping_cost: shipping,
-          total_amount: subtotal,
-          status: "pending",
-          payment_status: "unpaid",
-          source: "manual",
-        } as any)
-        .select()
-        .single();
-      if (error) throw error;
+      const orderPayload: any = {
+        ...(invoiceCode ? { invoice_number: invoiceCode, order_number: invoiceCode } : {}),
+        manual_code: pageCode || null,
+        ...(pageCode || invoiceCode ? { tracking_code: pageCode || invoiceCode } : {}),
+        extra_number: (data.extraNumber || "").trim() || null,
+        account_name: data.accountName || null,
+        governorate: data.governorate || null,
+        customer_name: data.customerName,
+        customer_phone: normalizePhone(data.customerPhone),
+        customer_address: data.customerAddress,
+        notes: data.notes,
+        subtotal,
+        shipping_cost: shipping,
+        total_amount: subtotal,
+        source: "manual",
+      };
+
+      let order: any;
+      if (editingOrderId) {
+        if (!isAdmin) {
+          toast({ title: "غير مسموح", description: "الموديريتور لا يمكنه تعديل الفواتير القديمة.", variant: "destructive" });
+          setSaving(false);
+          return;
+        }
+        const { data: updated, error: updErr } = await supabase
+          .from("orders")
+          .update(orderPayload)
+          .eq("id", editingOrderId)
+          .select()
+          .single();
+        if (updErr) throw updErr;
+        order = updated;
+        // Replace items
+        await supabase.from("order_items").delete().eq("order_id", editingOrderId);
+      } else {
+        const { data: inserted, error } = await supabase
+          .from("orders")
+          .insert({ ...orderPayload, status: "pending", payment_status: "unpaid" } as any)
+          .select()
+          .single();
+        if (error) throw error;
+        order = inserted;
+      }
 
       const itemRows = items.map((l) => {
         const { p } = findProduct(l.code);
@@ -244,7 +346,10 @@ const ManualInvoice = () => {
 
       const savedOrder = { ...order, invoice_number: savedInvoiceNumber, order_number: savedInvoiceNumber, order_items: itemRows };
 
-      toast({ title: "تم حفظ الفاتورة بنجاح", description: `رقم الفاتورة: ${savedInvoiceNumber}` });
+      toast({
+        title: editingOrderId ? "تم تحديث الفاتورة بنجاح" : "تم حفظ الفاتورة بنجاح",
+        description: `رقم الفاتورة: ${savedInvoiceNumber}`,
+      });
       if (thenPrint) {
         await printInvoiceTemplate([savedOrder] as any, { markPrinted: false, copies: 2 });
       }
@@ -252,6 +357,7 @@ const ManualInvoice = () => {
       try {
         nextInvoiceNumber = await getNextInvoiceNumber();
       } catch {}
+      setEditingOrderId(null);
       setData({
         invoiceNumber: nextInvoiceNumber,
         date: todayStr(),
@@ -276,7 +382,7 @@ const ManualInvoice = () => {
           <Button variant="ghost" onClick={() => navigate("/admin")}>
             <ArrowRight className="ml-2 h-4 w-4" /> رجوع
           </Button>
-          <h1 className="text-xl font-bold">إضافة فاتورة يدوية</h1>
+          <h1 className="text-xl font-bold">{editingOrderId ? `تعديل فاتورة #${data.invoiceNumber}` : "إضافة فاتورة يدوية"}</h1>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => downloadInvoicePng(`invoice-${data.invoiceNumber || "draft"}`)}>
               <Download className="ml-2 h-4 w-4" /> حفظ كصورة
@@ -310,12 +416,41 @@ const ManualInvoice = () => {
           </div>
         </Card>
 
+        {editingOrderId && (
+          <Card className="no-print p-3 mb-3 bg-amber-50 border-amber-300 flex items-center justify-between">
+            <div className="text-sm text-amber-800 font-bold">
+              ⚠ وضع التعديل: تقوم بتعديل فاتورة موجودة (#{data.invoiceNumber}). اضغط حفظ لتطبيق التغييرات.
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                setEditingOrderId(null);
+                try {
+                  const next = await getNextInvoiceNumber();
+                  setData({
+                    invoiceNumber: next,
+                    date: todayStr(),
+                    customerName: "", customerPhone: "", customerAddress: "",
+                    governorate: "", accountName: "", pageCode: "", extraNumber: "",
+                    notes: "",
+                    shipping: 0, lines: [emptyLine(), emptyLine()],
+                  });
+                } catch {}
+              }}
+            >
+              إلغاء التعديل
+            </Button>
+          </Card>
+        )}
+
         <Card className="p-4 bg-muted/30">
           <InvoiceTemplate
             data={data}
             editable
             onChange={setData}
             onCodeBlur={handleCodeBlur}
+            onInvoiceNumberBlur={handleInvoiceNumberBlur}
           />
         </Card>
 
