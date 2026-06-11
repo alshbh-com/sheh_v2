@@ -43,9 +43,14 @@ const downloadInvoicePng = async (filename: string) => {
 
 const ManualInvoice = () => {
   const navigate = useNavigate();
+  const { currentUser } = useAdminAuth();
+  const role = (currentUser as any)?.role;
+  const isModerator = role === 'moderator';
+  const isAdmin = !isModerator; // admin / owner / supervisor can edit existing
   const [products, setProducts] = useState<any[]>([]);
   const [governorates, setGovernorates] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [scratch, setScratch] = useState("");
   const [data, setData] = useState<InvoiceData>({
     invoiceNumber: "",
