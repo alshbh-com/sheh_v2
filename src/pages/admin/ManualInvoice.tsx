@@ -379,9 +379,15 @@ const ManualInvoice = () => {
     <div className="min-h-screen bg-background py-6" dir="rtl">
       <div className="max-w-4xl mx-auto px-4">
         <div className="no-print flex items-center justify-between mb-4">
-          <Button variant="ghost" onClick={() => navigate("/admin")}>
-            <ArrowRight className="ml-2 h-4 w-4" /> رجوع
-          </Button>
+          {isModerator ? (
+            <Button variant="outline" onClick={logout}>
+              <LogOut className="ml-2 h-4 w-4" /> تسجيل خروج
+            </Button>
+          ) : (
+            <Button variant="ghost" onClick={() => navigate("/admin")}>
+              <ArrowRight className="ml-2 h-4 w-4" /> رجوع
+            </Button>
+          )}
           <h1 className="text-xl font-bold">{editingOrderId ? `تعديل فاتورة #${data.invoiceNumber}` : "إضافة فاتورة يدوية"}</h1>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => downloadInvoicePng(`invoice-${data.invoiceNumber || "draft"}`)}>
