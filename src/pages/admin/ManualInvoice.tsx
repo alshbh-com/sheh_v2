@@ -278,29 +278,49 @@ const ManualInvoice = () => {
         }
       }
 
-      const { data: order, error } = await supabase
-        .from("orders")
-        .insert({
-          ...(invoiceCode ? { invoice_number: invoiceCode, order_number: invoiceCode } : {}),
-          manual_code: pageCode || null,
-          ...(pageCode || invoiceCode ? { tracking_code: pageCode || invoiceCode } : {}),
-          extra_number: (data.extraNumber || "").trim() || null,
-          account_name: data.accountName || null,
-          governorate: data.governorate || null,
-          customer_name: data.customerName,
-          customer_phone: normalizePhone(data.customerPhone),
-          customer_address: data.customerAddress,
-          notes: data.notes,
-          subtotal,
-          shipping_cost: shipping,
-          total_amount: subtotal,
-          status: "pending",
-          payment_status: "unpaid",
-          source: "manual",
-        } as any)
-        .select()
-        .single();
-      if (error) throw error;
+      const orderPayload: any = {
+        ...(invoiceCode ? { invoice_number: invoiceCode, order_number: invoiceCode } : {}),
+        manual_code: pageCode || null,
+        ...(pageCode || invoiceCode ? { tracking_code: pageCode || invoiceCode } : {}),
+        extra_number: (data.extraNumber || "").trim() || null,
+        account_name: data.accountName || null,
+        governorate: data.governorate || null,
+        customer_name: data.customerName,
+        customer_phone: normalizePhone(data.customerPhone),
+        customer_address: data.customerAddress,
+        notes: data.notes,
+        subtotal,
+        shipping_cost: shipping,
+        total_amount: subtotal,
+        source: "manual",
+      };
+
+      let order: any;
+      if (editingOrderId) {
+        if (!isAdmin) {
+          toast({ title: "غير مسموح", description: "الموديريتور لا يمكنه تعديل الفواتير القديمة.", variant: "destructive" });
+          setSaving(false);
+          return;
+        }
+        const { data: updated, error: updErr } = await supabase
+          .from("orders")
+          .update(orderPayload)
+          .eq("id", editingOrderId)
+          .select()
+          .single();
+        if (updErr) throw updErr;
+        order = updated;
+        // Replace items
+        await supabase.from("order_items").delete().eq("order_id", editingOrderId);
+      } else {
+        const { data: inserted, error } = await supabase
+          .from("orders")
+          .insert({ ...orderPayload, status: "pending", payment_status: "unpaid" } as any)
+          .select()
+          .single();
+        if (error) throw error;
+        order = inserted;
+      }
 
       const itemRows = items.map((l) => {
         const { p } = findProduct(l.code);
