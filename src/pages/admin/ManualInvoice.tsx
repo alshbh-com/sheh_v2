@@ -382,7 +382,7 @@ const ManualInvoice = () => {
           <Button variant="ghost" onClick={() => navigate("/admin")}>
             <ArrowRight className="ml-2 h-4 w-4" /> رجوع
           </Button>
-          <h1 className="text-xl font-bold">إضافة فاتورة يدوية</h1>
+          <h1 className="text-xl font-bold">{editingOrderId ? `تعديل فاتورة #${data.invoiceNumber}` : "إضافة فاتورة يدوية"}</h1>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => downloadInvoicePng(`invoice-${data.invoiceNumber || "draft"}`)}>
               <Download className="ml-2 h-4 w-4" /> حفظ كصورة
