@@ -235,6 +235,53 @@ export type Database = {
           },
         ]
       }
+      agent_stock_movements: {
+        Row: {
+          agent_id: string | null
+          agent_name: string
+          created_at: string
+          created_by: string | null
+          id: string
+          items: Json
+          movement_type: string
+          notes: string | null
+          total_qty: number
+          updated_at: string
+        }
+        Insert: {
+          agent_id?: string | null
+          agent_name: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          items?: Json
+          movement_type: string
+          notes?: string | null
+          total_qty?: number
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string | null
+          agent_name?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          items?: Json
+          movement_type?: string
+          notes?: string | null
+          total_qty?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_stock_movements_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       analytics_events: {
         Row: {
           created_at: string
