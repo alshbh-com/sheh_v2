@@ -409,9 +409,9 @@ const Products = () => {
                     </div>
 
                     <div>
-                      <Label htmlFor="purchase_price">تكلفة المنتج (ج.م)</Label>
-                      <Input id="purchase_price" type="number" step="0.01" value={formData.purchase_price} onChange={(e) => setFormData({...formData, purchase_price: e.target.value})} placeholder="للاطلاع فقط - لا تؤثر على السعر" />
-                      <p className="text-xs text-muted-foreground mt-1">للعلم فقط، لا تظهر للعميل ولا تدخل في الحسابات</p>
+                      <Label htmlFor="purchase_price">تكلفة المنتج (ج.م) *</Label>
+                      <Input id="purchase_price" type="number" step="0.01" required value={formData.purchase_price} onChange={(e) => setFormData({...formData, purchase_price: e.target.value})} placeholder="إجباري - تكلفة الشراء" />
+                      <p className="text-xs text-muted-foreground mt-1">إجباري للعلم فقط، لا تظهر للعميل ولا تدخل في الحسابات</p>
                     </div>
 
                     </div>
