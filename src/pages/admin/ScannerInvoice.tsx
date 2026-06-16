@@ -204,17 +204,22 @@ const ScannerInvoice = () => {
 
   const printMovement = (m: Movement) => {
     const typeLabel = m.movement_type === "out" ? "خروج للمندوب" : "إرجاع من المندوب";
+    const totalValue = (m.items || []).reduce((s, it: any) => s + (Number(it.qty) || 0) * (Number(it.price) || 0), 0);
     const rows = (m.items || [])
-      .map(
-        (it, i) => `
+      .map((it: any, i) => {
+        const price = Number(it.price) || 0;
+        const lt = (Number(it.qty) || 0) * price;
+        return `
           <tr>
             <td>${i + 1}</td>
             <td>${it.code || "-"}</td>
             <td>${it.name}</td>
             <td>${[it.color, it.size].filter(Boolean).join(" / ") || "-"}</td>
             <td style="text-align:center">${it.qty}</td>
-          </tr>`
-      )
+            <td style="text-align:center">${price.toFixed(2)}</td>
+            <td style="text-align:center">${lt.toFixed(2)}</td>
+          </tr>`;
+      })
       .join("");
     const w = window.open("", "_blank", "width=900,height=700");
     if (!w) return;
@@ -228,6 +233,7 @@ const ScannerInvoice = () => {
         th,td { border:1px solid #333; padding:6px; }
         th { background:#f3f4f6; }
         .tot { margin-top:10px; font-weight:bold; font-size:15px; }
+        .val { margin-top:4px; font-weight:bold; font-size:16px; color:#0a7d2c; }
         .sig { margin-top:40px; display:flex; justify-content:space-between; }
         .sig div { width:45%; border-top:1px solid #333; padding-top:6px; text-align:center; }
       </style></head><body>
@@ -238,10 +244,11 @@ const ScannerInvoice = () => {
         <div><b>المسجل:</b> ${m.created_by || "-"}</div>
       </div>
       <table>
-        <thead><tr><th>#</th><th>الكود</th><th>المنتج</th><th>اللون/المقاس</th><th>الكمية</th></tr></thead>
+        <thead><tr><th>#</th><th>الكود</th><th>المنتج</th><th>اللون/المقاس</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
       <div class="tot">إجمالي القطع: ${m.total_qty} | عدد المنتجات: ${(m.items || []).length}</div>
+      <div class="val">إجمالي القيمة: ${totalValue.toFixed(2)} ج.م</div>
       ${m.notes ? `<p><b>ملاحظات:</b> ${m.notes}</p>` : ""}
       <div class="sig"><div>توقيع المندوب</div><div>توقيع المسؤول</div></div>
       <script>window.onload=()=>setTimeout(()=>window.print(),250)</script>
