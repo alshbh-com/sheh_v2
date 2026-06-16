@@ -108,6 +108,7 @@ const ScannerInvoice = () => {
             size: p.size || "",
             stock: Number(p.stock ?? p.quantity ?? 0),
             qty: 1,
+            price: Number(p.sale_price ?? p.price ?? 0),
           },
         ];
       });
