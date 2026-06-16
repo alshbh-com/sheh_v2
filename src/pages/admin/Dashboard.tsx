@@ -18,7 +18,8 @@ import {
   Palette,
   Building2,
   ScanLine,
-  Lock
+  Lock,
+  Ban
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import SearchBar from "@/components/admin/SearchBar";
@@ -52,6 +53,7 @@ const adminSections = [
   { title: "المظهر", description: "الألوان والقوالب واسم المنصة", icon: Palette, path: "/admin/appearance", color: "text-fuchsia-500", permission: "user_management" },
   { title: "المكاتب", description: "إدارة المكاتب والفروع", icon: Building2, path: "/admin/offices", color: "text-sky-500", permission: "user_management" },
   { title: "مساحة التخزين", description: "المساحة المتاحة من حصة Supabase المجانية", icon: Wallet, path: "/admin/storage", color: "text-emerald-600", permission: "user_management" },
+  { title: "البلوك", description: "بلوك أرقام فواتير لمنع الموديريتور من تسجيلها", icon: Ban, path: "/admin/blocked-invoices", color: "text-red-700", permission: "__owner_only__" },
 ];
 
 const LOW_STOCK_THRESHOLD = 1;
@@ -91,7 +93,10 @@ const Dashboard = () => {
   }
 
   // Filter sections based on view permission
-  const visibleSections = adminSections.filter(section => canView(section.permission));
+  const isOwner = (currentUser as any).role === 'owner';
+  const visibleSections = adminSections.filter(section =>
+    section.permission === "__owner_only__" ? isOwner : canView(section.permission)
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-accent/20 py-8">

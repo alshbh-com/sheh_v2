@@ -33,6 +33,7 @@ import BarcodeScanner from "./pages/admin/BarcodeScanner";
 import ManualInvoice from "./pages/admin/ManualInvoice";
 import ScannerInvoice from "./pages/admin/ScannerInvoice";
 import Storage from "./pages/admin/Storage";
+import BlockedInvoices from "./pages/admin/BlockedInvoices";
 import BottomNav from "./components/BottomNav";
 import TopNav from "./components/TopNav";
 import NotFound from "./pages/NotFound";
@@ -81,6 +82,7 @@ const App = () => (
                 <Route path="/admin/manual-invoice" element={<AdminRoute><ManualInvoice /></AdminRoute>} />
                 <Route path="/admin/scanner-invoice" element={<AdminRoute><ScannerInvoice /></AdminRoute>} />
                 <Route path="/admin/storage" element={<AdminRoute><Storage /></AdminRoute>} />
+                <Route path="/admin/blocked-invoices" element={<AdminRoute><BlockedInvoices /></AdminRoute>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

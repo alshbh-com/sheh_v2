@@ -46,7 +46,9 @@ const ManualInvoice = () => {
   const { currentUser, logout } = useAdminAuth();
   const role = (currentUser as any)?.role;
   const isModerator = role === 'moderator';
-  const isAdmin = !isModerator; // admin / owner / supervisor can edit existing
+  const isOwner = role === 'owner';
+  const isAdmin = !isModerator; // admin / owner / supervisor can edit any existing invoice
+  const currentUsername = currentUser?.username || null;
   const [products, setProducts] = useState<any[]>([]);
   const [governorates, setGovernorates] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
@@ -167,25 +169,55 @@ const ManualInvoice = () => {
     return null;
   };
 
+  const isInvoiceBlocked = async (code: string): Promise<{ blocked: boolean; reason?: string | null }> => {
+    const v = code.trim();
+    if (!v) return { blocked: false };
+    const { data } = await (supabase as any)
+      .from("blocked_invoices")
+      .select("reason")
+      .eq("invoice_number", v)
+      .maybeSingle();
+    if (data) return { blocked: true, reason: (data as any).reason };
+    return { blocked: false };
+  };
+
   const handleInvoiceNumberBlur = async (value: string) => {
     const v = (value || "").trim();
     if (!v) return;
     // Same code as currently loaded edit target — skip
     if (editingOrderId && v === data.invoiceNumber.trim()) return;
+
+    // Block check (applies to moderator strictly; admin gets a warning only)
+    const blk = await isInvoiceBlocked(v);
+    if (blk.blocked && isModerator) {
+      toast({
+        title: "الرقم ده معمول بلوك من المالك",
+        description: blk.reason ? `السبب: ${blk.reason}` : "اختر رقم آخر للفاتورة.",
+        variant: "destructive",
+      });
+      try {
+        const nextCode = await getNextInvoiceNumber();
+        setData((d) => ({ ...d, invoiceNumber: nextCode }));
+      } catch {
+        setData((d) => ({ ...d, invoiceNumber: "" }));
+      }
+      return;
+    }
+
     try {
       const existing = await findExistingOrder(v);
       if (!existing) {
-        // Clear any previous edit context
         if (editingOrderId) setEditingOrderId(null);
         return;
       }
-      if (!isAdmin) {
+      // Moderator: can only edit invoices they themselves created
+      const isOwnInvoice = !!currentUsername && (existing as any).created_by_username === currentUsername;
+      if (!isAdmin && !isOwnInvoice) {
         toast({
           title: "غير مسموح",
-          description: `الرقم ${v} مستخدم بالفعل في فاتورة أخرى. الموديريتور لا يمكنه تعديل الفواتير القديمة.`,
+          description: `الرقم ${v} مستخدم بالفعل في فاتورة موديريتور آخر — لا يمكنك تعديلها.`,
           variant: "destructive",
         });
-        // revert to a fresh preview number
         try {
           const nextCode = await getNextInvoiceNumber();
           setData((d) => ({ ...d, invoiceNumber: nextCode }));
@@ -194,7 +226,7 @@ const ManualInvoice = () => {
         }
         return;
       }
-      // Admin: load the existing invoice into the form for editing
+      // Load existing invoice for editing
       const items = (existing.order_items || []).map((it: any) => ({
         code: it.product_code || "",
         name: it.product_name || "",
@@ -265,6 +297,23 @@ const ManualInvoice = () => {
 
       const invoiceCode = data.invoiceNumber.trim();
       const pageCode = (data.pageCode || "").trim();
+
+      // Block check (moderator-only enforcement)
+      if (isModerator) {
+        for (const code of [invoiceCode, pageCode].filter(Boolean)) {
+          const blk = await isInvoiceBlocked(code);
+          if (blk.blocked) {
+            toast({
+              title: "الرقم ده معمول بلوك من المالك",
+              description: blk.reason ? `السبب: ${blk.reason}` : `الرقم ${code} مرفوض. اختر رقم آخر.`,
+              variant: "destructive",
+            });
+            setSaving(false);
+            return;
+          }
+        }
+      }
+
       const codesToCheck = Array.from(new Set([invoiceCode, pageCode].filter(Boolean)));
       for (const code of codesToCheck) {
         if (await isCodeTaken(code)) {
@@ -297,10 +346,19 @@ const ManualInvoice = () => {
 
       let order: any;
       if (editingOrderId) {
-        if (!isAdmin) {
-          toast({ title: "غير مسموح", description: "الموديريتور لا يمكنه تعديل الفواتير القديمة.", variant: "destructive" });
-          setSaving(false);
-          return;
+        // Moderator can only edit their own invoices
+        if (isModerator) {
+          const { data: existing } = await (supabase as any)
+            .from("orders")
+            .select("created_by_username")
+            .eq("id", editingOrderId)
+            .maybeSingle();
+          const isOwn = !!currentUsername && (existing as any)?.created_by_username === currentUsername;
+          if (!isOwn) {
+            toast({ title: "غير مسموح", description: "الموديريتور يقدر يعدل فواتيره فقط.", variant: "destructive" });
+            setSaving(false);
+            return;
+          }
         }
         const { data: updated, error: updErr } = await supabase
           .from("orders")
@@ -315,7 +373,12 @@ const ManualInvoice = () => {
       } else {
         const { data: inserted, error } = await supabase
           .from("orders")
-          .insert({ ...orderPayload, status: "pending", payment_status: "unpaid" } as any)
+          .insert({
+            ...orderPayload,
+            status: "pending",
+            payment_status: "unpaid",
+            created_by_username: currentUsername,
+          } as any)
           .select()
           .single();
         if (error) throw error;

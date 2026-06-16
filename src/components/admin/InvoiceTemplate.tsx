@@ -235,11 +235,11 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
             <div className="border-l border-black p-1 text-center font-bold text-[12px] flex items-center justify-center">
               عنوان :
             </div>
-            <div className="p-1">
+            <div className="p-1 flex items-center justify-center">
               {editable ? (
-                <textarea className={`${inputCls} resize-none h-full min-h-[36px]`} value={data.customerAddress} onChange={(e) => update({ customerAddress: e.target.value })} />
+                <textarea className={`${inputCls} resize-none h-full min-h-[36px] text-center`} value={data.customerAddress} onChange={(e) => update({ customerAddress: e.target.value })} />
               ) : (
-                <div className="text-center">{data.customerAddress}</div>
+                <div className="text-center w-full">{data.customerAddress}</div>
               )}
             </div>
           </div>
@@ -359,20 +359,20 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
 
 
       {/* Notes */}
-      <div className="grid grid-cols-[80px_1fr] border-x border-b border-black text-[11px]">
-        <div className="border-l border-black p-1 text-center font-bold">ملاحظات</div>
-        <div className="p-1 min-h-[24px] text-center">
+      <div className="grid grid-cols-[80px_1fr] border-x border-b border-black text-[11px] min-h-[28px]">
+        <div className="border-l border-black p-1 text-center font-bold flex items-center justify-center">ملاحظات</div>
+        <div className="p-1 text-center flex items-center justify-center">
           {editable ? (
             <input className={inputCls} value={data.notes} onChange={(e) => update({ notes: e.target.value })} />
           ) : (data.notes)}
         </div>
       </div>
-      <div className="border-x border-b border-black p-1 text-center text-[11px] font-semibold">
+      <div className="border-x border-b border-black p-1 text-center text-[11px] font-semibold min-h-[28px] flex items-center justify-center">
         {POLICY_LINES[0]}
       </div>
-      <div className="grid grid-cols-[80px_1fr] border-x border-b border-black text-[11px]">
-        <div className="border-l border-black p-1 text-center font-bold">سياسه الشحن</div>
-        <div className="p-1 text-center">{POLICY_LINES[1]}</div>
+      <div className="grid grid-cols-[80px_1fr] border-x border-b border-black text-[11px] min-h-[28px]">
+        <div className="border-l border-black p-1 text-center font-bold flex items-center justify-center">سياسه الشحن</div>
+        <div className="p-1 text-center flex items-center justify-center">{POLICY_LINES[1]}</div>
       </div>
     </div>
   );

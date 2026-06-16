@@ -127,13 +127,13 @@ const buildInvoice = async (order: OrderLike) => {
           <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;">كود الصفحة</div>
           <div style="padding:3px;text-align:center;">${esc(pageCode)}</div>
         </div>
-        <div style="display:grid;grid-template-columns:80px 1fr;border-bottom:1px solid #000;">
-          <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;">اسم الحساب</div>
-          <div style="padding:3px;text-align:center;">${esc(accountName)}</div>
+        <div style="display:grid;grid-template-columns:80px 1fr;border-bottom:1px solid #000;min-height:28px;">
+          <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;display:flex;align-items:center;justify-content:center;">اسم الحساب</div>
+          <div style="padding:3px;text-align:center;display:flex;align-items:center;justify-content:center;">${esc(accountName)}</div>
         </div>
         <div style="display:grid;grid-template-columns:80px 1fr;min-height:36px;">
           <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;display:flex;align-items:center;justify-content:center;">عنوان :</div>
-          <div style="padding:3px;text-align:center;">${esc(customerAddress)}</div>
+          <div style="padding:3px;text-align:center;display:flex;align-items:center;justify-content:center;">${esc(customerAddress)}</div>
         </div>
       </div>
       <div style="border-right:1px solid #000;display:flex;align-items:center;justify-content:center;padding:3px;">
@@ -172,16 +172,16 @@ const buildInvoice = async (order: OrderLike) => {
       </tfoot>
     </table>
 
-    <div style="display:grid;grid-template-columns:80px 1fr;border:1px solid #000;border-top:0;font-size:11px;">
-      <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;">ملاحظات</div>
-      <div style="padding:3px;text-align:center;min-height:22px;">${esc(notes)}</div>
+    <div style="display:grid;grid-template-columns:80px 1fr;border:1px solid #000;border-top:0;font-size:11px;min-height:28px;">
+      <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;display:flex;align-items:center;justify-content:center;">ملاحظات</div>
+      <div style="padding:3px;text-align:center;display:flex;align-items:center;justify-content:center;">${esc(notes)}</div>
     </div>
-    <div style="border:1px solid #000;border-top:0;padding:3px;text-align:center;font-size:11px;font-weight:600;">
+    <div style="border:1px solid #000;border-top:0;padding:3px;text-align:center;font-size:11px;font-weight:600;min-height:30px;display:flex;align-items:center;justify-content:center;">
       ${esc(POLICY_LINES[0])}
     </div>
-    <div style="display:grid;grid-template-columns:80px 1fr;border:1px solid #000;border-top:0;font-size:11px;">
-      <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;">سياسه الشحن</div>
-      <div style="padding:3px;text-align:center;">${esc(POLICY_LINES[1])}</div>
+    <div style="display:grid;grid-template-columns:80px 1fr;border:1px solid #000;border-top:0;font-size:11px;min-height:28px;">
+      <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;display:flex;align-items:center;justify-content:center;">سياسه الشحن</div>
+      <div style="padding:3px;text-align:center;display:flex;align-items:center;justify-content:center;">${esc(POLICY_LINES[1])}</div>
     </div>
   </div>`;
 };
