@@ -21,6 +21,7 @@ type ScannedItem = {
   size: string;
   stock: number;
   qty: number;
+  price: number;
 };
 
 type Movement = {
