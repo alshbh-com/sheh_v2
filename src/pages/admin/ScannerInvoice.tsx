@@ -58,7 +58,7 @@ const ScannerInvoice = () => {
       const [{ data: ps }, { data: ags }] = await Promise.all([
         supabase
           .from("products")
-          .select("id, code, barcode, name, color, size, stock, quantity")
+          .select("id, code, barcode, name, color, size, stock, quantity, price, sale_price")
           .eq("is_active", true)
           .limit(5000),
         supabase
