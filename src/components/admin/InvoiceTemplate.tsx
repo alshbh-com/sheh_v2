@@ -235,11 +235,11 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
             <div className="border-l border-black p-1 text-center font-bold text-[12px] flex items-center justify-center">
               عنوان :
             </div>
-            <div className="p-1">
+            <div className="p-1 flex items-center justify-center">
               {editable ? (
-                <textarea className={`${inputCls} resize-none h-full min-h-[36px]`} value={data.customerAddress} onChange={(e) => update({ customerAddress: e.target.value })} />
+                <textarea className={`${inputCls} resize-none h-full min-h-[36px] text-center`} value={data.customerAddress} onChange={(e) => update({ customerAddress: e.target.value })} />
               ) : (
-                <div className="text-center">{data.customerAddress}</div>
+                <div className="text-center w-full">{data.customerAddress}</div>
               )}
             </div>
           </div>
