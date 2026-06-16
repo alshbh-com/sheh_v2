@@ -46,7 +46,9 @@ const ManualInvoice = () => {
   const { currentUser, logout } = useAdminAuth();
   const role = (currentUser as any)?.role;
   const isModerator = role === 'moderator';
-  const isAdmin = !isModerator; // admin / owner / supervisor can edit existing
+  const isOwner = role === 'owner';
+  const isAdmin = !isModerator; // admin / owner / supervisor can edit any existing invoice
+  const currentUsername = currentUser?.username || null;
   const [products, setProducts] = useState<any[]>([]);
   const [governorates, setGovernorates] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
