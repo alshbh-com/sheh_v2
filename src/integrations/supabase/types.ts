@@ -365,6 +365,33 @@ export type Database = {
         }
         Relationships: []
       }
+      blocked_invoices: {
+        Row: {
+          blocked_by: string | null
+          created_at: string
+          id: string
+          invoice_number: string
+          reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          blocked_by?: string | null
+          created_at?: string
+          id?: string
+          invoice_number: string
+          reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          blocked_by?: string | null
+          created_at?: string
+          id?: string
+          invoice_number?: string
+          reason?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cashbox: {
         Row: {
           amount: number
