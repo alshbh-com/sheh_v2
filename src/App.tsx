@@ -33,6 +33,7 @@ import BarcodeScanner from "./pages/admin/BarcodeScanner";
 import ManualInvoice from "./pages/admin/ManualInvoice";
 import ScannerInvoice from "./pages/admin/ScannerInvoice";
 import Storage from "./pages/admin/Storage";
+import BlockedInvoices from "./pages/admin/BlockedInvoices";
 import BottomNav from "./components/BottomNav";
 import TopNav from "./components/TopNav";
 import NotFound from "./pages/NotFound";
