@@ -297,6 +297,23 @@ const ManualInvoice = () => {
 
       const invoiceCode = data.invoiceNumber.trim();
       const pageCode = (data.pageCode || "").trim();
+
+      // Block check (moderator-only enforcement)
+      if (isModerator) {
+        for (const code of [invoiceCode, pageCode].filter(Boolean)) {
+          const blk = await isInvoiceBlocked(code);
+          if (blk.blocked) {
+            toast({
+              title: "الرقم ده معمول بلوك من المالك",
+              description: blk.reason ? `السبب: ${blk.reason}` : `الرقم ${code} مرفوض. اختر رقم آخر.`,
+              variant: "destructive",
+            });
+            setSaving(false);
+            return;
+          }
+        }
+      }
+
       const codesToCheck = Array.from(new Set([invoiceCode, pageCode].filter(Boolean)));
       for (const code of codesToCheck) {
         if (await isCodeTaken(code)) {
@@ -329,10 +346,19 @@ const ManualInvoice = () => {
 
       let order: any;
       if (editingOrderId) {
-        if (!isAdmin) {
-          toast({ title: "غير مسموح", description: "الموديريتور لا يمكنه تعديل الفواتير القديمة.", variant: "destructive" });
-          setSaving(false);
-          return;
+        // Moderator can only edit their own invoices
+        if (isModerator) {
+          const { data: existing } = await (supabase as any)
+            .from("orders")
+            .select("created_by_username")
+            .eq("id", editingOrderId)
+            .maybeSingle();
+          const isOwn = !!currentUsername && (existing as any)?.created_by_username === currentUsername;
+          if (!isOwn) {
+            toast({ title: "غير مسموح", description: "الموديريتور يقدر يعدل فواتيره فقط.", variant: "destructive" });
+            setSaving(false);
+            return;
+          }
         }
         const { data: updated, error: updErr } = await supabase
           .from("orders")
@@ -347,7 +373,12 @@ const ManualInvoice = () => {
       } else {
         const { data: inserted, error } = await supabase
           .from("orders")
-          .insert({ ...orderPayload, status: "pending", payment_status: "unpaid" } as any)
+          .insert({
+            ...orderPayload,
+            status: "pending",
+            payment_status: "unpaid",
+            created_by_username: currentUsername,
+          } as any)
           .select()
           .single();
         if (error) throw error;
