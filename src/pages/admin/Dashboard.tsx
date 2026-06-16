@@ -18,7 +18,8 @@ import {
   Palette,
   Building2,
   ScanLine,
-  Lock
+  Lock,
+  Ban
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import SearchBar from "@/components/admin/SearchBar";
