@@ -93,7 +93,10 @@ const Dashboard = () => {
   }
 
   // Filter sections based on view permission
-  const visibleSections = adminSections.filter(section => canView(section.permission));
+  const isOwner = (currentUser as any).role === 'owner';
+  const visibleSections = adminSections.filter(section =>
+    section.permission === "__owner_only__" ? isOwner : canView(section.permission)
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-accent/20 py-8">
