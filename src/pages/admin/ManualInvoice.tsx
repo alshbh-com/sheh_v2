@@ -338,6 +338,8 @@ const ManualInvoice = () => {
         }
       }
 
+      const paymentStatus = data.paymentTiming === "before" ? "paid" : "unpaid";
+
       const orderPayload: any = {
         ...(invoiceCode ? { invoice_number: invoiceCode, order_number: invoiceCode } : {}),
         manual_code: pageCode || null,
@@ -352,7 +354,8 @@ const ManualInvoice = () => {
         subtotal,
         shipping_cost: shipping,
         total_amount: subtotal,
-        source: "manual",
+        payment_status: paymentStatus,
+        source: invoiceType === "wholesale" ? "wholesale" : "manual",
       };
 
       let order: any;
@@ -387,7 +390,6 @@ const ManualInvoice = () => {
           .insert({
             ...orderPayload,
             status: "pending",
-            payment_status: "unpaid",
             created_by_username: currentUsername,
           } as any)
           .select()
