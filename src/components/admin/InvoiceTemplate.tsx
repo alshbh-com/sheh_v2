@@ -16,7 +16,8 @@ export type InvoiceData = {
   customerPhone: string;
   customerAddress: string;
   governorate?: string;
-  accountName?: string;
+  accountName?: string; // اسم المستخدم منشئ الفاتورة (للقراءة فقط)
+  paymentTiming?: "before" | "after"; // قبل / بعد
   pageCode?: string; // كود الصفحة (يستخدم في الباركود)
   extraNumber?: string; // رقم إضافي
   notes: string;
