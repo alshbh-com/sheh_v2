@@ -320,19 +320,18 @@ const ManualInvoice = () => {
       const invoiceCode = data.invoiceNumber.trim();
       const pageCode = (data.pageCode || "").trim();
 
-      // Block check (moderator-only enforcement)
-      if (isModerator) {
-        for (const code of [invoiceCode, pageCode].filter(Boolean)) {
-          const blk = await isInvoiceBlocked(code);
-          if (blk.blocked) {
-            toast({
-              title: "الرقم ده معمول بلوك من المالك",
-              description: blk.reason ? `السبب: ${blk.reason}` : `الرقم ${code} مرفوض. اختر رقم آخر.`,
-              variant: "destructive",
-            });
-            setSaving(false);
-            return;
-          }
+      // Block check by customer phone (applies to all roles)
+      const customerPhoneNorm = normalizePhone(data.customerPhone);
+      if (customerPhoneNorm) {
+        const blk = await isPhoneBlocked(customerPhoneNorm);
+        if (blk.blocked) {
+          toast({
+            title: "العميل ده معمول بلوك من المالك",
+            description: blk.reason ? `السبب: ${blk.reason}` : `رقم العميل ${customerPhoneNorm} مرفوض.`,
+            variant: "destructive",
+          });
+          setSaving(false);
+          return;
         }
       }
 
