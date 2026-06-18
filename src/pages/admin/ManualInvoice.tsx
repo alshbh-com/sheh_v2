@@ -324,7 +324,7 @@ const ManualInvoice = () => {
         }
       }
 
-      const codesToCheck = Array.from(new Set([invoiceCode, pageCode].filter(Boolean)));
+      const codesToCheck = Array.from(new Set([invoiceCode].filter(Boolean)));
       for (const code of codesToCheck) {
         if (await isCodeTaken(code)) {
           toast({
@@ -340,9 +340,9 @@ const ManualInvoice = () => {
       const orderPayload: any = {
         ...(invoiceCode ? { invoice_number: invoiceCode, order_number: invoiceCode } : {}),
         manual_code: pageCode || null,
-        ...(pageCode || invoiceCode ? { tracking_code: pageCode || invoiceCode } : {}),
+        ...(invoiceCode ? { tracking_code: invoiceCode } : {}),
         extra_number: (data.extraNumber || "").trim() || null,
-        account_name: data.accountName || null,
+        account_name: currentUsername || data.accountName || null,
         governorate: data.governorate || null,
         customer_name: data.customerName,
         customer_phone: normalizePhone(data.customerPhone),
