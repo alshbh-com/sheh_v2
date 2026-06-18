@@ -112,12 +112,20 @@ const Invoices = () => {
         if (!orderNum.includes(q) && !orderId.includes(q) && !customerName.includes(q)) return false;
       }
       
-      // فلتر التاريخ
-      if (dateFilter) {
-        const orderDate = getDateKey(order.created_at);
-        if (orderDate !== dateFilter) return false;
+      // فلتر التاريخ (من - إلى)
+      const orderDate = getDateKey(order.created_at);
+      if (dateFrom && orderDate < dateFrom) return false;
+      if (dateTo && orderDate > dateTo) return false;
+
+      // فلتر رقم الفاتورة (من - إلى)
+      if (numFrom || numTo) {
+        const rawNum = (order.order_number || order.invoice_number || "").toString();
+        const n = parseInt(rawNum, 10);
+        if (!Number.isFinite(n)) return false;
+        if (numFrom && n < parseInt(numFrom, 10)) return false;
+        if (numTo && n > parseInt(numTo, 10)) return false;
       }
-      
+
       // فلتر المحافظة
       if (governorateFilter && governorateFilter !== "all") {
         const orderGov = order.governorates?.name || order.customers?.governorate || "";
@@ -126,7 +134,7 @@ const Invoices = () => {
       
       return true;
     });
-  }, [orders, dateFilter, governorateFilter, searchQuery]);
+  }, [orders, dateFrom, dateTo, numFrom, numTo, governorateFilter, searchQuery]);
 
   // تصدير Excel للأوردرات المفلترة/المحددة فقط
   const handleExportExcel = () => {
