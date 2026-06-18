@@ -1885,9 +1885,6 @@ const AgentOrders = () => {
                               {(order as any).manual_code || "-"}
                             </TableCell>
                             <TableCell className="text-xs">
-                              {(order as any).created_by_username || "-"}
-                            </TableCell>
-                            <TableCell className="text-xs">
                               {(order as any).account_name || "-"}
                             </TableCell>
                             <TableCell className="font-medium">
