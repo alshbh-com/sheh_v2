@@ -52,7 +52,7 @@ const adminSections = [
   { title: "المظهر", description: "الألوان والقوالب واسم المنصة", icon: Palette, path: "/admin/appearance", color: "text-fuchsia-500", permission: "user_management" },
   { title: "المكاتب", description: "إدارة المكاتب والفروع", icon: Building2, path: "/admin/offices", color: "text-sky-500", permission: "user_management" },
   { title: "مساحة التخزين", description: "المساحة المتاحة من حصة Supabase المجانية", icon: Wallet, path: "/admin/storage", color: "text-emerald-600", permission: "user_management" },
-  { title: "البلوك", description: "بلوك أرقام فواتير لمنع الموديريتور من تسجيلها", icon: Ban, path: "/admin/blocked-invoices", color: "text-red-700", permission: "__owner_only__" },
+  { title: "البلوك", description: "بلوك أرقام عملاء لمنع تسجيل فواتير لهم", icon: Ban, path: "/admin/blocked-invoices", color: "text-red-700", permission: "__owner_only__" },
 ];
 
 const LOW_STOCK_THRESHOLD = 1;
