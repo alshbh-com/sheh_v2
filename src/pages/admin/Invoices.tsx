@@ -176,8 +176,8 @@ const Invoices = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "الأوردرات");
     
-    const fileName = dateFilter 
-      ? `orders_${dateFilter}.xlsx`
+    const fileName = (dateFrom || dateTo)
+      ? `orders_${dateFrom || "all"}_to_${dateTo || "now"}.xlsx`
       : `orders_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(wb, fileName);
   };
