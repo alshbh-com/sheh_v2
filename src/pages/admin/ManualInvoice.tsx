@@ -133,21 +133,22 @@ const ManualInvoice = () => {
 
   const handleCodeBlur = (rowIndex: number, code: string) => {
     if (!code) return;
-    const { p, isWholesale } = findProduct(code);
+    const { p, isWholesale: codeIsWholesale } = findProduct(code);
     if (!p) {
       toast({ title: "المنتج غير موجود", description: `لا يوجد منتج بكود ${code}`, variant: "destructive" });
       return;
     }
+    const useWholesale = codeIsWholesale || invoiceType === "wholesale";
     setData((d) => {
       const lines = [...d.lines];
       const cur = lines[rowIndex] || emptyLine();
-      const price = isWholesale && p.wholesale_price
+      const price = useWholesale && p.wholesale_price
         ? Number(p.wholesale_price)
         : Number(p.sale_price || p.price || 0);
       lines[rowIndex] = {
         ...cur,
         code: p.code,
-        name: p.name + (isWholesale ? " (جملة)" : ""),
+        name: p.name + (useWholesale ? " (جملة)" : ""),
         color: p.color || cur.color || "",
         size: p.size || cur.size || "",
         price,
