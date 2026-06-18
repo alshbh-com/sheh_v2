@@ -131,9 +131,36 @@ const ManualInvoice = () => {
     return { p: productIndex.byCode.get(key) || productIndex.byBarcode.get(key), isWholesale: false };
   };
 
-  const handleCodeBlur = (rowIndex: number, code: string) => {
+  // Fallback: search the DB directly (handles products beyond local cache)
+  const findProductDb = async (raw: string): Promise<{ p: any; isWholesale: boolean }> => {
+    const value = raw.trim();
+    if (!value) return { p: null, isWholesale: false };
+    // Try wholesale_code first
+    const { data: wRows } = await (supabase as any)
+      .from("products")
+      .select("id, code, barcode, name, price, sale_price, color, size, wholesale_price, wholesale_code")
+      .eq("wholesale_code", value)
+      .limit(1);
+    if (wRows && wRows[0]) return { p: wRows[0], isWholesale: true };
+    // Then code, then barcode
+    const { data: cRows } = await (supabase as any)
+      .from("products")
+      .select("id, code, barcode, name, price, sale_price, color, size, wholesale_price, wholesale_code")
+      .or(`code.eq.${value},barcode.eq.${value}`)
+      .limit(1);
+    if (cRows && cRows[0]) return { p: cRows[0], isWholesale: false };
+    return { p: null, isWholesale: false };
+  };
+
+  const handleCodeBlur = async (rowIndex: number, code: string) => {
     if (!code) return;
-    const { p, isWholesale: codeIsWholesale } = findProduct(code);
+    let { p, isWholesale: codeIsWholesale } = findProduct(code);
+    if (!p) {
+      // DB fallback
+      const dbResult = await findProductDb(code);
+      p = dbResult.p;
+      codeIsWholesale = dbResult.isWholesale;
+    }
     if (!p) {
       toast({ title: "المنتج غير موجود", description: `لا يوجد منتج بكود ${code}`, variant: "destructive" });
       return;
@@ -157,6 +184,7 @@ const ManualInvoice = () => {
       return { ...d, lines };
     });
   };
+
 
   const handleGovernorateChange = (govId: string) => {
     const g = governorates.find((x) => x.id === govId);
