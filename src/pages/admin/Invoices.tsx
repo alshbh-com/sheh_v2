@@ -26,7 +26,10 @@ const Invoices = () => {
   const [printCopies, setPrintCopies] = useState<number>(2);
   
   // فلاتر
-  const [dateFilter, setDateFilter] = useState<string>("");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [numFrom, setNumFrom] = useState<string>("");
+  const [numTo, setNumTo] = useState<string>("");
   const [governorateFilter, setGovernorateFilter] = useState<string>("all");
 
   const { data: orders, isLoading } = useQuery({
@@ -41,7 +44,6 @@ const Invoices = () => {
           governorates (name, shipping_cost),
           order_items (*, products (name))
         `)
-        .or("is_printed.is.null,is_printed.eq.false")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
