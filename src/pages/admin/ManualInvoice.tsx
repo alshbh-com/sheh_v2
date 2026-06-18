@@ -484,12 +484,12 @@ const ManualInvoice = () => {
           </div>
         </div>
 
-        {/* Governorate dropdown (auto-fills shipping) */}
+        {/* Governorate dropdown (auto-fills shipping) + Invoice type (wholesale/website) */}
         <Card className="no-print p-3 mb-3 bg-primary/5 border-primary/20 flex flex-wrap items-end gap-3">
           <div className="flex-1 min-w-[200px]">
-            <Label className="text-xs">المحافظة (تعبئة سعر الشحن تلقائياً)</Label>
+            <Label className="text-xs">المنطقة (تعبئة سعر الشحن تلقائياً)</Label>
             <Select value={governorates.find(g => g.name === data.governorate)?.id || ""} onValueChange={handleGovernorateChange}>
-              <SelectTrigger><SelectValue placeholder="اختر المحافظة" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="اختر المنطقة" /></SelectTrigger>
               <SelectContent>
                 {governorates.map((g) => (
                   <SelectItem key={g.id} value={g.id}>
@@ -499,8 +499,18 @@ const ManualInvoice = () => {
               </SelectContent>
             </Select>
           </div>
-          <div className="text-xs text-muted-foreground">
-            تنبيه: رقم الهاتف لازم يكون 11 رقم. لكتابة سعر جملة استخدم كود الجملة بدل الكود العادي.
+          <div className="min-w-[180px]">
+            <Label className="text-xs">نوع الفاتورة (لا تظهر للعميل)</Label>
+            <Select value={invoiceType} onValueChange={(v) => setInvoiceType(v as "website" | "wholesale")}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="website">ويب سايت (سعر التجزئة)</SelectItem>
+                <SelectItem value="wholesale">جملة (سعر الجملة)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="text-xs text-muted-foreground basis-full">
+            تنبيه: رقم الهاتف لازم يكون 11 رقم. لو اخترت "جملة" هيتم استخدام سعر الجملة تلقائياً لكل المنتجات.
           </div>
         </Card>
 
