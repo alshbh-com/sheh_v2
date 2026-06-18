@@ -391,7 +391,7 @@ const Invoices = () => {
                 variant="outline" 
                 size="sm"
                 onClick={() => {
-                  setDateFilter("");
+                  setDateFrom(""); setDateTo(""); setNumFrom(""); setNumTo("");
                   setGovernorateFilter("all");
                   setSearchQuery("");
                 }}
