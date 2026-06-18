@@ -54,6 +54,7 @@ const ManualInvoice = () => {
   const [saving, setSaving] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [scratch, setScratch] = useState("");
+  const [invoiceType, setInvoiceType] = useState<"website" | "wholesale">("website");
   const [data, setData] = useState<InvoiceData>({
     invoiceNumber: "",
     date: todayStr(),
@@ -61,13 +62,21 @@ const ManualInvoice = () => {
     customerPhone: "",
     customerAddress: "",
     governorate: "",
-    accountName: "",
+    accountName: currentUsername || "",
+    paymentTiming: "after",
     pageCode: "",
     extraNumber: "",
     notes: "",
     shipping: 0,
     lines: [emptyLine(), emptyLine()],
   });
+
+  // Keep accountName always synced with current username (read-only on invoice)
+  useEffect(() => {
+    if (currentUsername) {
+      setData((d) => (d.accountName === currentUsername ? d : { ...d, accountName: currentUsername }));
+    }
+  }, [currentUsername]);
 
   useEffect(() => {
     (async () => {
@@ -124,21 +133,22 @@ const ManualInvoice = () => {
 
   const handleCodeBlur = (rowIndex: number, code: string) => {
     if (!code) return;
-    const { p, isWholesale } = findProduct(code);
+    const { p, isWholesale: codeIsWholesale } = findProduct(code);
     if (!p) {
       toast({ title: "المنتج غير موجود", description: `لا يوجد منتج بكود ${code}`, variant: "destructive" });
       return;
     }
+    const useWholesale = codeIsWholesale || invoiceType === "wholesale";
     setData((d) => {
       const lines = [...d.lines];
       const cur = lines[rowIndex] || emptyLine();
-      const price = isWholesale && p.wholesale_price
+      const price = useWholesale && p.wholesale_price
         ? Number(p.wholesale_price)
         : Number(p.sale_price || p.price || 0);
       lines[rowIndex] = {
         ...cur,
         code: p.code,
-        name: p.name + (isWholesale ? " (جملة)" : ""),
+        name: p.name + (useWholesale ? " (جملة)" : ""),
         color: p.color || cur.color || "",
         size: p.size || cur.size || "",
         price,
@@ -244,7 +254,8 @@ const ManualInvoice = () => {
         customerPhone: existing.customer_phone || "",
         customerAddress: existing.customer_address || "",
         governorate: existing.governorate || "",
-        accountName: existing.account_name || "",
+        accountName: existing.created_by_username || existing.account_name || currentUsername || "",
+        paymentTiming: existing.payment_status === "paid" ? "before" : "after",
         pageCode: existing.manual_code || "",
         extraNumber: existing.extra_number || "",
         notes: existing.notes || "",
@@ -265,10 +276,10 @@ const ManualInvoice = () => {
   const isCodeTaken = async (code: string) => {
     const value = code.trim();
     if (!value) return false;
+    // Note: manual_code (page code) is intentionally NOT checked — duplicates are allowed.
     const checks = await Promise.all([
       (supabase as any).from("orders").select("id").eq("invoice_number", value).limit(1),
       (supabase as any).from("orders").select("id").eq("order_number", value).limit(1),
-      (supabase as any).from("orders").select("id").eq("manual_code", value).limit(1),
       (supabase as any).from("orders").select("id").eq("tracking_code", value).limit(1),
     ]);
     return checks.some(({ data: rows }) => rows && rows.some((r: any) => r.id !== editingOrderId));
@@ -314,7 +325,7 @@ const ManualInvoice = () => {
         }
       }
 
-      const codesToCheck = Array.from(new Set([invoiceCode, pageCode].filter(Boolean)));
+      const codesToCheck = Array.from(new Set([invoiceCode].filter(Boolean)));
       for (const code of codesToCheck) {
         if (await isCodeTaken(code)) {
           toast({
@@ -327,12 +338,14 @@ const ManualInvoice = () => {
         }
       }
 
+      const paymentStatus = data.paymentTiming === "before" ? "paid" : "unpaid";
+
       const orderPayload: any = {
         ...(invoiceCode ? { invoice_number: invoiceCode, order_number: invoiceCode } : {}),
         manual_code: pageCode || null,
-        ...(pageCode || invoiceCode ? { tracking_code: pageCode || invoiceCode } : {}),
+        ...(invoiceCode ? { tracking_code: invoiceCode } : {}),
         extra_number: (data.extraNumber || "").trim() || null,
-        account_name: data.accountName || null,
+        account_name: currentUsername || data.accountName || null,
         governorate: data.governorate || null,
         customer_name: data.customerName,
         customer_phone: normalizePhone(data.customerPhone),
@@ -341,7 +354,8 @@ const ManualInvoice = () => {
         subtotal,
         shipping_cost: shipping,
         total_amount: subtotal,
-        source: "manual",
+        payment_status: paymentStatus,
+        source: invoiceType === "wholesale" ? "wholesale" : "manual",
       };
 
       let order: any;
@@ -376,7 +390,6 @@ const ManualInvoice = () => {
           .insert({
             ...orderPayload,
             status: "pending",
-            payment_status: "unpaid",
             created_by_username: currentUsername,
           } as any)
           .select()
@@ -425,7 +438,10 @@ const ManualInvoice = () => {
         invoiceNumber: nextInvoiceNumber,
         date: todayStr(),
         customerName: "", customerPhone: "", customerAddress: "",
-        governorate: "", accountName: "", pageCode: "", extraNumber: "",
+        governorate: "",
+        accountName: currentUsername || "",
+        paymentTiming: "after",
+        pageCode: "", extraNumber: "",
         notes: "",
         shipping: 0, lines: [emptyLine(), emptyLine()],
       });
@@ -468,12 +484,12 @@ const ManualInvoice = () => {
           </div>
         </div>
 
-        {/* Governorate dropdown (auto-fills shipping) */}
+        {/* Governorate dropdown (auto-fills shipping) + Invoice type (wholesale/website) */}
         <Card className="no-print p-3 mb-3 bg-primary/5 border-primary/20 flex flex-wrap items-end gap-3">
           <div className="flex-1 min-w-[200px]">
-            <Label className="text-xs">المحافظة (تعبئة سعر الشحن تلقائياً)</Label>
+            <Label className="text-xs">المنطقة (تعبئة سعر الشحن تلقائياً)</Label>
             <Select value={governorates.find(g => g.name === data.governorate)?.id || ""} onValueChange={handleGovernorateChange}>
-              <SelectTrigger><SelectValue placeholder="اختر المحافظة" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="اختر المنطقة" /></SelectTrigger>
               <SelectContent>
                 {governorates.map((g) => (
                   <SelectItem key={g.id} value={g.id}>
@@ -483,8 +499,18 @@ const ManualInvoice = () => {
               </SelectContent>
             </Select>
           </div>
-          <div className="text-xs text-muted-foreground">
-            تنبيه: رقم الهاتف لازم يكون 11 رقم. لكتابة سعر جملة استخدم كود الجملة بدل الكود العادي.
+          <div className="min-w-[180px]">
+            <Label className="text-xs">نوع الفاتورة (لا تظهر للعميل)</Label>
+            <Select value={invoiceType} onValueChange={(v) => setInvoiceType(v as "website" | "wholesale")}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="website">ويب سايت (سعر التجزئة)</SelectItem>
+                <SelectItem value="wholesale">جملة (سعر الجملة)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="text-xs text-muted-foreground basis-full">
+            تنبيه: رقم الهاتف لازم يكون 11 رقم. لو اخترت "جملة" هيتم استخدام سعر الجملة تلقائياً لكل المنتجات.
           </div>
         </Card>
 
@@ -504,7 +530,10 @@ const ManualInvoice = () => {
                     invoiceNumber: next,
                     date: todayStr(),
                     customerName: "", customerPhone: "", customerAddress: "",
-                    governorate: "", accountName: "", pageCode: "", extraNumber: "",
+                    governorate: "",
+                    accountName: currentUsername || "",
+                    paymentTiming: "after",
+                    pageCode: "", extraNumber: "",
                     notes: "",
                     shipping: 0, lines: [emptyLine(), emptyLine()],
                   });

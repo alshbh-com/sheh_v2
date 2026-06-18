@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, PackageX } from "lucide-react";
+import { ArrowLeft, PackageX, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { formatOrderItems, formatSizesDisplay } from "@/lib/formatOrderItems";
@@ -424,6 +424,48 @@ const AllOrders = () => {
     return <div className="p-8">جاري التحميل...</div>;
   }
 
+  const exportToExcel = async () => {
+    if (!filteredOrders?.length) {
+      toast.error("لا توجد أوردرات للتصدير");
+      return;
+    }
+    try {
+      const XLSX = await import("xlsx");
+      const rows = filteredOrders.map((order: any) => {
+        const subtotal = parseFloat(order.total_amount?.toString() || "0");
+        const shipping = parseFloat(order.shipping_cost?.toString() || "0");
+        const final = subtotal + shipping;
+        const itemsText = (order.order_items || [])
+          .map((it: any) => `${it.product_name || ""} × ${it.quantity || 0}`)
+          .join(" | ");
+        return {
+          "رقم الأوردر": order.order_number || "",
+          "الكود اليدوي": order.manual_code || "",
+          "المدريتور": order.created_by_username || "",
+          "اسم الاكونت": order.account_name || "",
+          "المنطقة": order.customers?.governorate || "",
+          "اسم العميل": order.customers?.name || "",
+          "الهاتف": order.customers?.phone || "",
+          "تفاصيل الأوردر": itemsText,
+          "إجمالي الأوردر": subtotal.toFixed(2),
+          "الشحن": shipping.toFixed(2),
+          "الإجمالي بالشحن": final.toFixed(2),
+          "المندوب": order.delivery_agents?.name || "",
+          "الحالة": getStatusText(order.status),
+          "الملاحظات": order.notes || "",
+          "التاريخ": new Date(order.created_at).toLocaleDateString("ar-EG"),
+        };
+      });
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "الأوردرات");
+      XLSX.writeFile(wb, `orders-${new Date().toISOString().slice(0, 10)}.xlsx`);
+      toast.success("تم تصدير الملف بنجاح");
+    } catch (e: any) {
+      toast.error("فشل التصدير: " + e.message);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-accent/20 py-8">
       <div className="container mx-auto px-4">
@@ -434,7 +476,13 @@ const AllOrders = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>جميع الأوردرات</CardTitle>
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <CardTitle>جميع الأوردرات</CardTitle>
+              <Button onClick={exportToExcel} variant="default" size="sm">
+                <Download className="ml-2 h-4 w-4" />
+                تصدير Excel
+              </Button>
+            </div>
             <div className="sticky top-16 z-10 bg-card pt-4 pb-2 flex items-center gap-4 flex-wrap">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">بحث:</span>
@@ -536,13 +584,13 @@ const AllOrders = () => {
                       <TableHead>الكود اليدوي</TableHead>
                       <TableHead>المدريتور</TableHead>
                       <TableHead>اسم الاكونت</TableHead>
-                      <TableHead>المحافظة</TableHead>
+                      <TableHead>المنطقة</TableHead>
                       <TableHead>الاسم</TableHead>
                       <TableHead>الهاتف</TableHead>
-                      <TableHead>الهاتف الإضافي</TableHead>
-                      <TableHead>العنوان</TableHead>
                       <TableHead>تفاصيل الأوردر</TableHead>
-                      <TableHead>السعر النهائي</TableHead>
+                      <TableHead>إجمالي الأوردر</TableHead>
+                      <TableHead>الشحن</TableHead>
+                      <TableHead>الإجمالي بالشحن</TableHead>
                       <TableHead>المندوب</TableHead>
                       <TableHead>الحالة</TableHead>
                       <TableHead>الملاحظات</TableHead>
@@ -574,8 +622,6 @@ const AllOrders = () => {
                           <TableCell>{order.customers?.governorate || "-"}</TableCell>
                           <TableCell className="font-medium">{order.customers?.name}</TableCell>
                           <TableCell>{order.customers?.phone}</TableCell>
-                          <TableCell>{(order.customers as any)?.phone2 || "-"}</TableCell>
-                          <TableCell className="max-w-xs truncate">{order.customers?.address}</TableCell>
                           <TableCell className="max-w-xs">
                             {(() => {
                               const formattedItems = getFormattedItems(order.order_items);
@@ -628,7 +674,13 @@ const AllOrders = () => {
                               return "-";
                             })()}
                           </TableCell>
-                          <TableCell className="font-bold">
+                          <TableCell className="font-semibold">
+                            {totalAmount.toFixed(2)} ج.م
+                          </TableCell>
+                          <TableCell>
+                            {shippingCost.toFixed(2)} ج.م
+                          </TableCell>
+                          <TableCell className="font-bold text-primary">
                             {finalAmount.toFixed(2)} ج.م
                           </TableCell>
                           <TableCell>
