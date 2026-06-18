@@ -438,7 +438,10 @@ const ManualInvoice = () => {
         invoiceNumber: nextInvoiceNumber,
         date: todayStr(),
         customerName: "", customerPhone: "", customerAddress: "",
-        governorate: "", accountName: "", pageCode: "", extraNumber: "",
+        governorate: "",
+        accountName: currentUsername || "",
+        paymentTiming: "after",
+        pageCode: "", extraNumber: "",
         notes: "",
         shipping: 0, lines: [emptyLine(), emptyLine()],
       });
