@@ -150,7 +150,7 @@ const AgentOrders = () => {
           )
         `)
         .eq("delivery_agent_id", selectedAgentId)
-        .not("status", "in", '("delivered","returned","cancelled")')
+        // لا نستبعد أي حالة — الأوردرات تظل ظاهرة بعد التوصيل/المرتجع/الإلغاء (يتم التصفية بالتاريخ من فوق)
         .order("assigned_at", { ascending: false });
       
       if (error) throw error;
