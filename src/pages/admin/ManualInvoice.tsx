@@ -207,13 +207,14 @@ const ManualInvoice = () => {
     return null;
   };
 
-  const isInvoiceBlocked = async (code: string): Promise<{ blocked: boolean; reason?: string | null }> => {
-    const v = code.trim();
+  const isPhoneBlocked = async (phone: string): Promise<{ blocked: boolean; reason?: string | null }> => {
+    const v = normalizePhone(phone);
     if (!v) return { blocked: false };
     const { data } = await (supabase as any)
       .from("blocked_invoices")
       .select("reason")
-      .eq("invoice_number", v)
+      .or(`customer_phone.eq.${v},invoice_number.eq.${v}`)
+      .limit(1)
       .maybeSingle();
     if (data) return { blocked: true, reason: (data as any).reason };
     return { blocked: false };
@@ -222,25 +223,7 @@ const ManualInvoice = () => {
   const handleInvoiceNumberBlur = async (value: string) => {
     const v = (value || "").trim();
     if (!v) return;
-    // Same code as currently loaded edit target — skip
     if (editingOrderId && v === data.invoiceNumber.trim()) return;
-
-    // Block check (applies to moderator strictly; admin gets a warning only)
-    const blk = await isInvoiceBlocked(v);
-    if (blk.blocked && isModerator) {
-      toast({
-        title: "الرقم ده معمول بلوك من المالك",
-        description: blk.reason ? `السبب: ${blk.reason}` : "اختر رقم آخر للفاتورة.",
-        variant: "destructive",
-      });
-      try {
-        const nextCode = await getNextInvoiceNumber();
-        setData((d) => ({ ...d, invoiceNumber: nextCode }));
-      } catch {
-        setData((d) => ({ ...d, invoiceNumber: "" }));
-      }
-      return;
-    }
 
     try {
       const existing = await findExistingOrder(v);
