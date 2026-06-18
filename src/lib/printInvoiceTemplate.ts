@@ -67,8 +67,10 @@ const buildInvoice = async (order: OrderLike) => {
   const customerPhone = order.customers?.phone || order.customer_phone || "";
   const customerAddress = order.customers?.address || order.customer_address || "";
   const governorate = order.governorate || order.customers?.governorate || "";
-  const accountName = order.account_name || "";
+  const accountName = order.account_name || order.created_by_username || "";
+  const paymentTiming = (order.payment_status === "paid" || order.payment_timing === "before") ? "قبل" : "بعد";
   const pageCode = order.manual_code || "";
+  const extraNumber = order.extra_number || "";
   const notes = order.notes || "";
   const shipping = Number(order.shipping_cost || 0);
 
@@ -122,14 +124,20 @@ const buildInvoice = async (order: OrderLike) => {
           <div style="padding:3px;text-align:center;">${esc(customerPhone)}</div>
         </div>
         <div style="display:grid;grid-template-columns:80px 1fr 80px 1fr;border-bottom:1px solid #000;">
-          <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;">المحافظة</div>
+          <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;">المنطقة</div>
           <div style="border-left:1px solid #000;padding:3px;text-align:center;">${esc(governorate)}</div>
           <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;">كود الصفحة</div>
           <div style="padding:3px;text-align:center;">${esc(pageCode)}</div>
         </div>
+        <div style="display:grid;grid-template-columns:80px 1fr 80px 1fr;border-bottom:1px solid #000;min-height:28px;">
+          <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;display:flex;align-items:center;justify-content:center;">اسم المستخدم</div>
+          <div style="border-left:1px solid #000;padding:3px;text-align:center;display:flex;align-items:center;justify-content:center;">${esc(accountName)}</div>
+          <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;display:flex;align-items:center;justify-content:center;">الدفع</div>
+          <div style="padding:3px;text-align:center;display:flex;align-items:center;justify-content:center;">${esc(paymentTiming)}</div>
+        </div>
         <div style="display:grid;grid-template-columns:80px 1fr;border-bottom:1px solid #000;min-height:28px;">
-          <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;display:flex;align-items:center;justify-content:center;">اسم الحساب</div>
-          <div style="padding:3px;text-align:center;display:flex;align-items:center;justify-content:center;">${esc(accountName)}</div>
+          <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;display:flex;align-items:center;justify-content:center;">رقم إضافي</div>
+          <div style="padding:3px;text-align:center;display:flex;align-items:center;justify-content:center;">${esc(extraNumber)}</div>
         </div>
         <div style="display:grid;grid-template-columns:80px 1fr;min-height:36px;">
           <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;display:flex;align-items:center;justify-content:center;">عنوان :</div>
