@@ -11,18 +11,22 @@ import { useAdminAuth } from "@/contexts/AdminAuthContext";
 
 type BlockedRow = {
   id: string;
-  invoice_number: string;
+  customer_phone: string | null;
+  invoice_number: string | null;
   reason: string | null;
   blocked_by: string | null;
   created_at: string;
 };
+
+const normalizePhone = (s: string) =>
+  (s || "").replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/\D/g, "");
 
 const BlockedInvoices = () => {
   const navigate = useNavigate();
   const { currentUser } = useAdminAuth();
   const isOwner = currentUser?.role === "owner";
   const [rows, setRows] = useState<BlockedRow[]>([]);
-  const [num, setNum] = useState("");
+  const [phone, setPhone] = useState("");
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -31,35 +35,32 @@ const BlockedInvoices = () => {
       .from("blocked_invoices")
       .select("*")
       .order("created_at", { ascending: false });
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
+    if (error) { toast.error(error.message); return; }
     setRows((data as any) || []);
   };
 
-  useEffect(() => {
-    if (isOwner) load();
-  }, [isOwner]);
+  useEffect(() => { if (isOwner) load(); }, [isOwner]);
 
   const addBlock = async () => {
-    const v = num.trim();
-    if (!v) return;
+    const v = normalizePhone(phone);
+    if (!v) { toast.error("اكتب رقم هاتف صحيح"); return; }
     setSaving(true);
     try {
       const { error } = await (supabase as any)
         .from("blocked_invoices")
-        .insert({ invoice_number: v, reason: reason.trim() || null, blocked_by: currentUser?.username || null });
+        .insert({
+          customer_phone: v,
+          invoice_number: v, // keep legacy column populated
+          reason: reason.trim() || null,
+          blocked_by: currentUser?.username || null,
+        });
       if (error) throw error;
-      toast.success(`تم بلوك رقم ${v}`);
-      setNum("");
-      setReason("");
+      toast.success(`تم بلوك العميل ${v}`);
+      setPhone(""); setReason("");
       load();
     } catch (e: any) {
       toast.error(e.message?.includes("duplicate") ? "الرقم ده مبلوك بالفعل" : e.message);
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   const removeBlock = async (id: string) => {
@@ -88,29 +89,29 @@ const BlockedInvoices = () => {
         </Button>
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Ban className="h-5 w-5 text-red-600" /> البلوك — أرقام فواتير مرفوضة</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Ban className="h-5 w-5 text-red-600" /> البلوك — أرقام عملاء مرفوضة</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-2 items-end p-3 bg-muted rounded-md">
               <div>
-                <Label>رقم الفاتورة</Label>
-                <Input value={num} onChange={(e) => setNum(e.target.value)} placeholder="مثال: 1234" />
+                <Label>رقم العميل</Label>
+                <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="مثال: 01012345678" />
               </div>
               <div>
                 <Label>سبب البلوك (اختياري)</Label>
-                <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="مثال: محاولة احتيال" />
+                <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="مثال: عميل بيطلب ومش بيستلم" />
               </div>
-              <Button onClick={addBlock} disabled={saving || !num.trim()}>
+              <Button onClick={addBlock} disabled={saving || !phone.trim()}>
                 <Plus className="ml-2 h-4 w-4" /> بلوك
               </Button>
             </div>
 
             <div className="space-y-2">
-              {rows.length === 0 && <p className="text-center text-muted-foreground py-6">لا توجد أرقام مبلوكة.</p>}
+              {rows.length === 0 && <p className="text-center text-muted-foreground py-6">لا يوجد عملاء مبلوكين.</p>}
               {rows.map((r) => (
                 <div key={r.id} className="flex items-center justify-between border rounded p-3">
                   <div className="flex flex-col">
-                    <span className="font-mono font-bold text-red-600">#{r.invoice_number}</span>
+                    <span className="font-mono font-bold text-red-600">📵 {r.customer_phone || r.invoice_number}</span>
                     <span className="text-xs text-muted-foreground">
                       {r.reason || "بدون سبب"} • بواسطة {r.blocked_by || "—"} • {new Date(r.created_at).toLocaleString("ar-EG")}
                     </span>
