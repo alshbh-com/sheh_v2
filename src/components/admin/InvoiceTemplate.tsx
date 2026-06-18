@@ -100,7 +100,7 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
   const totalQty = lines.reduce((s, l) => s + (l.qty || 0), 0);
   const total = subtotal + (Number(data.shipping) || 0);
 
-  const barcodeValue = (data.pageCode || data.invoiceNumber || "0").toString();
+  const barcodeValue = (data.invoiceNumber || "0").toString();
 
   useEffect(() => {
     let cancelled = false;
