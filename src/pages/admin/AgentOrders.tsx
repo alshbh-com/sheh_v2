@@ -2081,7 +2081,16 @@ const AgentOrders = () => {
                              >
                                <Printer className="h-4 w-4" />
                              </Button>
-                             {canEditAgentOrders && (<>
+                              {canEditAgentOrders && (<>
+                              <PartialDeliveryDialog
+                                order={order}
+                                onSuccess={() => {
+                                  queryClient.invalidateQueries({ queryKey: ["agent-orders"] });
+                                  queryClient.invalidateQueries({ queryKey: ["all-agent-orders"] });
+                                  queryClient.invalidateQueries({ queryKey: ["agent_payments"] });
+                                  queryClient.invalidateQueries({ queryKey: ["agent_returns"] });
+                                }}
+                              />
                              <AlertDialog>
                                <AlertDialogTrigger asChild>
                                  <Button
