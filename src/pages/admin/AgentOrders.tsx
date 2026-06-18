@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, PackageX, Printer, Download, AlertTriangle, Trash2, MessageCircle, ArrowDown, Plus, Edit2, ChevronDown, ChevronUp, Calendar, Package, Check, Lock } from "lucide-react";
 import RescheduleOrderDialog from "@/components/admin/RescheduleOrderDialog";
+import PartialDeliveryDialog from "@/components/admin/PartialDeliveryDialog";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import * as XLSX from 'xlsx';
@@ -150,7 +151,7 @@ const AgentOrders = () => {
           )
         `)
         .eq("delivery_agent_id", selectedAgentId)
-        .not("status", "in", '("delivered","returned","cancelled")')
+        // لا نستبعد أي حالة — الأوردرات تظل ظاهرة بعد التوصيل/المرتجع/الإلغاء (يتم التصفية بالتاريخ من فوق)
         .order("assigned_at", { ascending: false });
       
       if (error) throw error;
@@ -2080,7 +2081,16 @@ const AgentOrders = () => {
                              >
                                <Printer className="h-4 w-4" />
                              </Button>
-                             {canEditAgentOrders && (<>
+                              {canEditAgentOrders && (<>
+                              <PartialDeliveryDialog
+                                order={order}
+                                onSuccess={() => {
+                                  queryClient.invalidateQueries({ queryKey: ["agent-orders"] });
+                                  queryClient.invalidateQueries({ queryKey: ["all-agent-orders"] });
+                                  queryClient.invalidateQueries({ queryKey: ["agent_payments"] });
+                                  queryClient.invalidateQueries({ queryKey: ["agent_returns"] });
+                                }}
+                              />
                              <AlertDialog>
                                <AlertDialogTrigger asChild>
                                  <Button
