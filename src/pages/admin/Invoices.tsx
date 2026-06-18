@@ -337,20 +337,20 @@ const Invoices = () => {
               </div>
               
               <div className="flex flex-col gap-1">
-                <Label className="text-xs">التاريخ</Label>
-                <Select value={dateFilter} onValueChange={setDateFilter}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="كل الأيام" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">كل الأيام</SelectItem>
-                    {uniqueDates.map((date) => (
-                      <SelectItem key={date} value={date}>
-                        {new Date(date).toLocaleDateString('ar-EG')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label className="text-xs">من تاريخ</Label>
+                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-40" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label className="text-xs">إلى تاريخ</Label>
+                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-40" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label className="text-xs">من رقم فاتورة</Label>
+                <Input type="number" value={numFrom} onChange={(e) => setNumFrom(e.target.value)} placeholder="10000" className="w-32" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label className="text-xs">إلى رقم فاتورة</Label>
+                <Input type="number" value={numTo} onChange={(e) => setNumTo(e.target.value)} placeholder="10999" className="w-32" />
               </div>
               
               <div className="flex flex-col gap-1">
