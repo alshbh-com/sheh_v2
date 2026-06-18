@@ -275,10 +275,10 @@ const ManualInvoice = () => {
   const isCodeTaken = async (code: string) => {
     const value = code.trim();
     if (!value) return false;
+    // Note: manual_code (page code) is intentionally NOT checked — duplicates are allowed.
     const checks = await Promise.all([
       (supabase as any).from("orders").select("id").eq("invoice_number", value).limit(1),
       (supabase as any).from("orders").select("id").eq("order_number", value).limit(1),
-      (supabase as any).from("orders").select("id").eq("manual_code", value).limit(1),
       (supabase as any).from("orders").select("id").eq("tracking_code", value).limit(1),
     ]);
     return checks.some(({ data: rows }) => rows && rows.some((r: any) => r.id !== editingOrderId));
