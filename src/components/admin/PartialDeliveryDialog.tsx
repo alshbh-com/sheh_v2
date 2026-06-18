@@ -34,14 +34,15 @@ const PartialDeliveryDialog = ({ order, onSuccess }: Props) => {
         it?.products?.name ||
         it?.product_name ||
         "منتج";
-      const qty = parseFloat((it?.quantity ?? 0).toString()) || 0;
+      const currentQty = parseFloat((it?.quantity ?? 0).toString()) || 0;
+      const origQty = parseFloat((it?.original_quantity ?? currentQty).toString()) || currentQty;
       const price = parseFloat((it?.price ?? it?.unit_price ?? 0).toString()) || 0;
       return {
         product_id: it?.product_id ?? null,
         product_name: name,
         price,
-        originalQty: qty,
-        deliveredQty: qty,
+        originalQty: Math.max(origQty, currentQty),
+        deliveredQty: currentQty,
       };
     });
     setRows(items);

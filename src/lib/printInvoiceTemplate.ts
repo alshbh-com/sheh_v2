@@ -82,13 +82,13 @@ const buildInvoice = async (order: OrderLike) => {
   const totalQty = lines.reduce((s, l) => s + (l.qty || 0), 0);
   const total = subtotal + shipping;
 
-  const barcodeValue = pageCode || order.tracking_code || String(invoiceNumber);
+  const barcodeValue = String(invoiceNumber);
   const barcodeSvg = await buildBarcodeSvg(barcodeValue);
 
   const headerCells = HEADER_LINKS.map((l, i) => `
-    <div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:2px;${i < 3 ? "border-left:1px solid #000;" : ""}">
+    <div style="display:flex;align-items:center;justify-content:center;gap:4px;padding:1px;${i < 3 ? "border-left:1px solid #000;" : ""}">
       <span style="display:inline-flex;align-items:center;justify-content:center;">${l.icon}</span>
-      <span style="font-size:10px;font-weight:bold;">${esc(l.label)}</span>
+      <span style="font-size:9px;font-weight:bold;">${esc(l.label)}</span>
     </div>`).join("");
 
   const rowsHtml = lines.map((line) => {

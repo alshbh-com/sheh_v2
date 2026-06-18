@@ -44,7 +44,6 @@ const adminSections = [
   { title: "الإحصائيات", description: "إحصائيات المبيعات", icon: BarChart, path: "/admin/statistics", color: "text-cyan-500", permission: "statistics" },
   { title: "إحصائيات المدريتورين", description: "أداء كل مدريتور شهرياً", icon: UserCog, path: "/admin/moderator-stats", color: "text-blue-600", permission: "statistics" },
   { title: "الفواتير", description: "طباعة الفواتير", icon: FileText, path: "/admin/invoices", color: "text-pink-500", permission: "invoices" },
-  { title: "الفواتير المقفلة", description: "الفواتير اللي اتطبعت قبل كده", icon: Lock, path: "/admin/locked-invoices", color: "text-zinc-600", permission: "invoices" },
   { title: "المحافظات", description: "إدارة المحافظات وأسعار الشحن", icon: Settings, path: "/admin/governorates", color: "text-teal-500", permission: "governorates" },
   { title: "جميع الأوردرات", description: "عرض جميع الأوردرات", icon: ShoppingCart, path: "/admin/all-orders", color: "text-violet-500", permission: "all_orders" },
   { title: "إعادة تعيين البيانات", description: "مسح جميع البيانات والبدء من جديد", icon: Trash2, path: "/admin/reset-data", color: "text-red-600", permission: "reset_data" },
@@ -53,7 +52,7 @@ const adminSections = [
   { title: "المظهر", description: "الألوان والقوالب واسم المنصة", icon: Palette, path: "/admin/appearance", color: "text-fuchsia-500", permission: "user_management" },
   { title: "المكاتب", description: "إدارة المكاتب والفروع", icon: Building2, path: "/admin/offices", color: "text-sky-500", permission: "user_management" },
   { title: "مساحة التخزين", description: "المساحة المتاحة من حصة Supabase المجانية", icon: Wallet, path: "/admin/storage", color: "text-emerald-600", permission: "user_management" },
-  { title: "البلوك", description: "بلوك أرقام فواتير لمنع الموديريتور من تسجيلها", icon: Ban, path: "/admin/blocked-invoices", color: "text-red-700", permission: "__owner_only__" },
+  { title: "البلوك", description: "بلوك أرقام عملاء لمنع تسجيل فواتير لهم", icon: Ban, path: "/admin/blocked-invoices", color: "text-red-700", permission: "__owner_only__" },
 ];
 
 const LOW_STOCK_THRESHOLD = 1;

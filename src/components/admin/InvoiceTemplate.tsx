@@ -100,7 +100,7 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
   const totalQty = lines.reduce((s, l) => s + (l.qty || 0), 0);
   const total = subtotal + (Number(data.shipping) || 0);
 
-  const barcodeValue = (data.pageCode || data.invoiceNumber || "0").toString();
+  const barcodeValue = (data.invoiceNumber || "0").toString();
 
   useEffect(() => {
     let cancelled = false;
@@ -148,9 +148,9 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
       style={{ width: "148mm", height: "210mm", padding: "4mm", fontFamily: "Tahoma, Arial, sans-serif" }}
     >
       {/* Header social bar */}
-      <div className="grid grid-cols-4 border border-black text-[11px] font-bold">
+      <div className="grid grid-cols-4 border border-black text-[9px] font-bold">
         {HEADER_LINKS.map((l, i) => (
-          <div key={i} className={`flex items-center justify-center gap-1 py-1 ${i < 3 ? "border-l border-black" : ""}`}>
+          <div key={i} className={`flex items-center justify-center gap-1 py-0.5 ${i < 3 ? "border-l border-black" : ""}`}>
             <SocialIcon platform={l.platform} />
             <span>{l.label}</span>
           </div>

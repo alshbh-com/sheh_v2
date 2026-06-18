@@ -26,7 +26,10 @@ const Invoices = () => {
   const [printCopies, setPrintCopies] = useState<number>(2);
   
   // فلاتر
-  const [dateFilter, setDateFilter] = useState<string>("");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [numFrom, setNumFrom] = useState<string>("");
+  const [numTo, setNumTo] = useState<string>("");
   const [governorateFilter, setGovernorateFilter] = useState<string>("all");
 
   const { data: orders, isLoading } = useQuery({
@@ -41,7 +44,6 @@ const Invoices = () => {
           governorates (name, shipping_cost),
           order_items (*, products (name))
         `)
-        .or("is_printed.is.null,is_printed.eq.false")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -110,12 +112,20 @@ const Invoices = () => {
         if (!orderNum.includes(q) && !orderId.includes(q) && !customerName.includes(q)) return false;
       }
       
-      // فلتر التاريخ
-      if (dateFilter) {
-        const orderDate = getDateKey(order.created_at);
-        if (orderDate !== dateFilter) return false;
+      // فلتر التاريخ (من - إلى)
+      const orderDate = getDateKey(order.created_at);
+      if (dateFrom && orderDate < dateFrom) return false;
+      if (dateTo && orderDate > dateTo) return false;
+
+      // فلتر رقم الفاتورة (من - إلى)
+      if (numFrom || numTo) {
+        const rawNum = (order.order_number || order.invoice_number || "").toString();
+        const n = parseInt(rawNum, 10);
+        if (!Number.isFinite(n)) return false;
+        if (numFrom && n < parseInt(numFrom, 10)) return false;
+        if (numTo && n > parseInt(numTo, 10)) return false;
       }
-      
+
       // فلتر المحافظة
       if (governorateFilter && governorateFilter !== "all") {
         const orderGov = order.governorates?.name || order.customers?.governorate || "";
@@ -124,7 +134,7 @@ const Invoices = () => {
       
       return true;
     });
-  }, [orders, dateFilter, governorateFilter, searchQuery]);
+  }, [orders, dateFrom, dateTo, numFrom, numTo, governorateFilter, searchQuery]);
 
   // تصدير Excel للأوردرات المفلترة/المحددة فقط
   const handleExportExcel = () => {
@@ -166,8 +176,8 @@ const Invoices = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "الأوردرات");
     
-    const fileName = dateFilter 
-      ? `orders_${dateFilter}.xlsx`
+    const fileName = (dateFrom || dateTo)
+      ? `orders_${dateFrom || "all"}_to_${dateTo || "now"}.xlsx`
       : `orders_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(wb, fileName);
   };
@@ -327,20 +337,20 @@ const Invoices = () => {
               </div>
               
               <div className="flex flex-col gap-1">
-                <Label className="text-xs">التاريخ</Label>
-                <Select value={dateFilter} onValueChange={setDateFilter}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="كل الأيام" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">كل الأيام</SelectItem>
-                    {uniqueDates.map((date) => (
-                      <SelectItem key={date} value={date}>
-                        {new Date(date).toLocaleDateString('ar-EG')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label className="text-xs">من تاريخ</Label>
+                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-40" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label className="text-xs">إلى تاريخ</Label>
+                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-40" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label className="text-xs">من رقم فاتورة</Label>
+                <Input type="number" value={numFrom} onChange={(e) => setNumFrom(e.target.value)} placeholder="10000" className="w-32" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label className="text-xs">إلى رقم فاتورة</Label>
+                <Input type="number" value={numTo} onChange={(e) => setNumTo(e.target.value)} placeholder="10999" className="w-32" />
               </div>
               
               <div className="flex flex-col gap-1">
@@ -381,7 +391,7 @@ const Invoices = () => {
                 variant="outline" 
                 size="sm"
                 onClick={() => {
-                  setDateFilter("");
+                  setDateFrom(""); setDateTo(""); setNumFrom(""); setNumTo("");
                   setGovernorateFilter("all");
                   setSearchQuery("");
                 }}

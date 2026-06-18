@@ -369,24 +369,27 @@ export type Database = {
         Row: {
           blocked_by: string | null
           created_at: string
+          customer_phone: string | null
           id: string
-          invoice_number: string
+          invoice_number: string | null
           reason: string | null
           updated_at: string
         }
         Insert: {
           blocked_by?: string | null
           created_at?: string
+          customer_phone?: string | null
           id?: string
-          invoice_number: string
+          invoice_number?: string | null
           reason?: string | null
           updated_at?: string
         }
         Update: {
           blocked_by?: string | null
           created_at?: string
+          customer_phone?: string | null
           id?: string
-          invoice_number?: string
+          invoice_number?: string | null
           reason?: string | null
           updated_at?: string
         }
@@ -722,6 +725,7 @@ export type Database = {
           id: string
           notes: string | null
           order_id: string | null
+          original_quantity: number | null
           price: number
           product_barcode: string | null
           product_code: string | null
@@ -740,6 +744,7 @@ export type Database = {
           id?: string
           notes?: string | null
           order_id?: string | null
+          original_quantity?: number | null
           price?: number
           product_barcode?: string | null
           product_code?: string | null
@@ -758,6 +763,7 @@ export type Database = {
           id?: string
           notes?: string | null
           order_id?: string | null
+          original_quantity?: number | null
           price?: number
           product_barcode?: string | null
           product_code?: string | null
@@ -1092,7 +1098,7 @@ export type Database = {
           stock: number
           updated_at: string
           wholesale_code: string | null
-          wholesale_price: number
+          wholesale_price: number | null
         }
         Insert: {
           barcode?: string | null
@@ -1122,7 +1128,7 @@ export type Database = {
           stock?: number
           updated_at?: string
           wholesale_code?: string | null
-          wholesale_price?: number
+          wholesale_price?: number | null
         }
         Update: {
           barcode?: string | null
@@ -1152,7 +1158,7 @@ export type Database = {
           stock?: number
           updated_at?: string
           wholesale_code?: string | null
-          wholesale_price?: number
+          wholesale_price?: number | null
         }
         Relationships: [
           {
