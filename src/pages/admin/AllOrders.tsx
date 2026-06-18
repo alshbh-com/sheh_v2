@@ -622,8 +622,6 @@ const AllOrders = () => {
                           <TableCell>{order.customers?.governorate || "-"}</TableCell>
                           <TableCell className="font-medium">{order.customers?.name}</TableCell>
                           <TableCell>{order.customers?.phone}</TableCell>
-                          <TableCell>{(order.customers as any)?.phone2 || "-"}</TableCell>
-                          <TableCell className="max-w-xs truncate">{order.customers?.address}</TableCell>
                           <TableCell className="max-w-xs">
                             {(() => {
                               const formattedItems = getFormattedItems(order.order_items);
@@ -676,7 +674,13 @@ const AllOrders = () => {
                               return "-";
                             })()}
                           </TableCell>
-                          <TableCell className="font-bold">
+                          <TableCell className="font-semibold">
+                            {totalAmount.toFixed(2)} ج.م
+                          </TableCell>
+                          <TableCell>
+                            {shippingCost.toFixed(2)} ج.م
+                          </TableCell>
+                          <TableCell className="font-bold text-primary">
                             {finalAmount.toFixed(2)} ج.م
                           </TableCell>
                           <TableCell>
