@@ -214,16 +214,14 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
               )}
             </div>
           </div>
-          <div className="grid grid-cols-[80px_1fr_80px_1fr] border-b border-black">
-            <div className="border-l border-black p-1 text-center font-bold text-[12px]">اسم المستخدم</div>
-            <div className="border-l border-black p-1">
-              <div className="text-center">{data.accountName || ""}</div>
-            </div>
-            <div className="border-l border-black p-1 text-center font-bold text-[12px]">الدفع</div>
-            <div className="p-1">
+          <div className="grid grid-cols-[70px_1fr_55px_60px_55px_1fr] border-b border-black">
+            <div className="border-l border-black p-1 text-center font-bold text-[11px]">اسم المستخدم</div>
+            <div className="border-l border-black p-1 text-center text-[11px]">{data.accountName || ""}</div>
+            <div className="border-l border-black p-1 text-center font-bold text-[11px]">الدفع</div>
+            <div className="border-l border-black p-1 text-center text-[11px]">
               {editable ? (
                 <select
-                  className={`${inputCls} cursor-pointer`}
+                  className={`${inputCls} cursor-pointer text-[11px]`}
                   value={data.paymentTiming || "after"}
                   onChange={(e) => update({ paymentTiming: e.target.value as "before" | "after" })}
                 >
@@ -231,17 +229,15 @@ export default function InvoiceTemplate({ data, editable = false, onChange, onCo
                   <option value="before">قبل</option>
                 </select>
               ) : (
-                <div className="text-center">{data.paymentTiming === "before" ? "قبل" : "بعد"}</div>
+                <span>{data.paymentTiming === "before" ? "قبل" : "بعد"}</span>
               )}
             </div>
-          </div>
-          <div className="grid grid-cols-[80px_1fr] border-b border-black min-h-[28px]">
-            <div className="border-l border-black p-1 text-center font-bold text-[12px] flex items-center justify-center">رقم إضافي</div>
-            <div className="p-1 flex items-center justify-center">
+            <div className="border-l border-black p-1 text-center font-bold text-[11px]">رقم إضافي</div>
+            <div className="p-1 text-center text-[11px]">
               {editable ? (
                 <input className={inputCls} value={data.extraNumber || ""} onChange={(e) => update({ extraNumber: e.target.value })} placeholder="(اختياري)" />
               ) : (
-                <div className="text-center">{data.extraNumber || ""}</div>
+                <span>{data.extraNumber || ""}</span>
               )}
             </div>
           </div>
