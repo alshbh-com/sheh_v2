@@ -308,9 +308,11 @@ const Orders = () => {
             finalShippingCost = orderShipping;
           } else if (order?.governorate_id) {
             const gov = governorates?.find(g => g.id === order.governorate_id);
-            if (gov) {
-              finalShippingCost = parseFloat(gov.shipping_cost?.toString() || "0");
-            }
+            if (gov) finalShippingCost = parseFloat(gov.shipping_cost?.toString() || "0");
+          } else if ((order as any)?.governorate) {
+            // Fallback: lookup by governorate name (manual orders may not have governorate_id)
+            const gov = governorates?.find(g => g.name === (order as any).governorate);
+            if (gov) finalShippingCost = parseFloat(gov.shipping_cost?.toString() || "0");
           }
         }
         
