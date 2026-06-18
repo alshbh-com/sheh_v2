@@ -82,7 +82,7 @@ const buildInvoice = async (order: OrderLike) => {
   const totalQty = lines.reduce((s, l) => s + (l.qty || 0), 0);
   const total = subtotal + shipping;
 
-  const barcodeValue = pageCode || order.tracking_code || String(invoiceNumber);
+  const barcodeValue = String(invoiceNumber);
   const barcodeSvg = await buildBarcodeSvg(barcodeValue);
 
   const headerCells = HEADER_LINKS.map((l, i) => `
