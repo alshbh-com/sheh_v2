@@ -584,13 +584,13 @@ const AllOrders = () => {
                       <TableHead>الكود اليدوي</TableHead>
                       <TableHead>المدريتور</TableHead>
                       <TableHead>اسم الاكونت</TableHead>
-                      <TableHead>المحافظة</TableHead>
+                      <TableHead>المنطقة</TableHead>
                       <TableHead>الاسم</TableHead>
                       <TableHead>الهاتف</TableHead>
-                      <TableHead>الهاتف الإضافي</TableHead>
-                      <TableHead>العنوان</TableHead>
                       <TableHead>تفاصيل الأوردر</TableHead>
-                      <TableHead>السعر النهائي</TableHead>
+                      <TableHead>إجمالي الأوردر</TableHead>
+                      <TableHead>الشحن</TableHead>
+                      <TableHead>الإجمالي بالشحن</TableHead>
                       <TableHead>المندوب</TableHead>
                       <TableHead>الحالة</TableHead>
                       <TableHead>الملاحظات</TableHead>
