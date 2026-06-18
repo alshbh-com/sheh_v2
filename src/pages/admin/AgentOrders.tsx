@@ -1884,9 +1884,6 @@ const AgentOrders = () => {
                             <TableCell className="font-mono text-xs font-bold text-primary">
                               {(order as any).manual_code || "-"}
                             </TableCell>
-                            <TableCell className="text-xs">
-                              {(order as any).account_name || "-"}
-                            </TableCell>
                             <TableCell className="font-medium">
                               {order.customers?.name}
                             </TableCell>
