@@ -54,6 +54,7 @@ const ManualInvoice = () => {
   const [saving, setSaving] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [scratch, setScratch] = useState("");
+  const [invoiceType, setInvoiceType] = useState<"website" | "wholesale">("website");
   const [data, setData] = useState<InvoiceData>({
     invoiceNumber: "",
     date: todayStr(),
@@ -61,13 +62,21 @@ const ManualInvoice = () => {
     customerPhone: "",
     customerAddress: "",
     governorate: "",
-    accountName: "",
+    accountName: currentUsername || "",
+    paymentTiming: "after",
     pageCode: "",
     extraNumber: "",
     notes: "",
     shipping: 0,
     lines: [emptyLine(), emptyLine()],
   });
+
+  // Keep accountName always synced with current username (read-only on invoice)
+  useEffect(() => {
+    if (currentUsername) {
+      setData((d) => (d.accountName === currentUsername ? d : { ...d, accountName: currentUsername }));
+    }
+  }, [currentUsername]);
 
   useEffect(() => {
     (async () => {
