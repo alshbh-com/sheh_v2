@@ -129,15 +129,13 @@ const buildInvoice = async (order: OrderLike) => {
           <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;">كود الصفحة</div>
           <div style="padding:3px;text-align:center;">${esc(pageCode)}</div>
         </div>
-        <div style="display:grid;grid-template-columns:80px 1fr 80px 1fr;border-bottom:1px solid #000;min-height:28px;">
-          <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;display:flex;align-items:center;justify-content:center;">اسم المستخدم</div>
-          <div style="border-left:1px solid #000;padding:3px;text-align:center;display:flex;align-items:center;justify-content:center;">${esc(accountName)}</div>
-          <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;display:flex;align-items:center;justify-content:center;">الدفع</div>
-          <div style="padding:3px;text-align:center;display:flex;align-items:center;justify-content:center;">${esc(paymentTiming)}</div>
-        </div>
-        <div style="display:grid;grid-template-columns:80px 1fr;border-bottom:1px solid #000;min-height:28px;">
-          <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;display:flex;align-items:center;justify-content:center;">رقم إضافي</div>
-          <div style="padding:3px;text-align:center;display:flex;align-items:center;justify-content:center;">${esc(extraNumber)}</div>
+        <div style="display:grid;grid-template-columns:70px 1fr 55px 60px 55px 1fr;border-bottom:1px solid #000;">
+          <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:10px;">اسم المستخدم</div>
+          <div style="border-left:1px solid #000;padding:3px;text-align:center;font-size:10px;">${esc(accountName)}</div>
+          <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:10px;">الدفع</div>
+          <div style="border-left:1px solid #000;padding:3px;text-align:center;font-size:10px;">${esc(paymentTiming)}</div>
+          <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:10px;">رقم إضافي</div>
+          <div style="padding:3px;text-align:center;font-size:10px;">${esc(extraNumber)}</div>
         </div>
         <div style="display:grid;grid-template-columns:80px 1fr;min-height:36px;">
           <div style="border-left:1px solid #000;padding:3px;text-align:center;font-weight:bold;font-size:11px;display:flex;align-items:center;justify-content:center;">عنوان :</div>
