@@ -308,6 +308,10 @@ const ManualInvoice = () => {
   };
 
   const save = async (thenPrint = false) => {
+    if (viewOnly) {
+      toast({ title: "وضع العرض", description: "اضغط زر التعديل أولاً للسماح بالحفظ.", variant: "destructive" });
+      return;
+    }
     const err = validate();
     if (err) {
       toast({ title: "تنبيه", description: err, variant: "destructive" });
