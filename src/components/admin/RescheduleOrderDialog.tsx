@@ -173,21 +173,16 @@ const RescheduleOrderDialog = ({ order, onSuccess }: RescheduleOrderDialogProps)
 
           <div>
             <Label className="mb-2 block">اختر التاريخ الجديد</Label>
-            <Select value={selectedDate} onValueChange={setSelectedDate}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="اختر تاريخ..." />
-              </SelectTrigger>
-              <SelectContent>
-                {dateOptions
-                  .filter((opt) => opt.value !== orderDate) // Exclude current date
-                  .map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+            <Input
+              type="date"
+              value={selectedDate}
+              min={orderDate}
+              max={today}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-full"
+            />
           </div>
+
 
           <div className="flex gap-2 pt-2">
             <Button
