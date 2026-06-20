@@ -259,6 +259,7 @@ const ManualInvoice = () => {
       }));
       const safeLines = items.length ? items : [emptyLine(), emptyLine()];
       setEditingOrderId(existing.id);
+      setViewOnly(true);
       setData({
         invoiceNumber: String(existing.invoice_number || existing.order_number || v),
         date: existing.created_at ? new Date(existing.created_at).toLocaleDateString("en-GB").replace(/\//g, "/") : todayStr(),
