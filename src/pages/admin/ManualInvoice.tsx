@@ -446,6 +446,7 @@ const ManualInvoice = () => {
         nextInvoiceNumber = await getNextInvoiceNumber();
       } catch {}
       setEditingOrderId(null);
+      setViewOnly(false);
       setData({
         invoiceNumber: nextInvoiceNumber,
         date: todayStr(),
