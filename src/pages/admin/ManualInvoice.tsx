@@ -276,8 +276,8 @@ const ManualInvoice = () => {
         lines: safeLines,
       });
       toast({
-        title: "تم تحميل الفاتورة للتعديل",
-        description: `فاتورة #${existing.invoice_number || existing.order_number || v} — يمكنك التعديل ثم الحفظ.`,
+        title: "تم فتح الفاتورة للعرض",
+        description: `فاتورة #${existing.invoice_number || existing.order_number || v} — اضغط "تعديل" للتعديل.`,
       });
     } catch (e: any) {
       console.error("invoice lookup failed", e);
