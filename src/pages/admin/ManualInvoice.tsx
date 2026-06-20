@@ -53,6 +53,7 @@ const ManualInvoice = () => {
   const [governorates, setGovernorates] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [viewOnly, setViewOnly] = useState(false);
   const [scratch, setScratch] = useState("");
   const [invoiceType, setInvoiceType] = useState<"website" | "wholesale">("website");
   const [data, setData] = useState<InvoiceData>({
