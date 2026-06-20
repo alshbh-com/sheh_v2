@@ -527,17 +527,39 @@ const ManualInvoice = () => {
               <ArrowRight className="ml-2 h-4 w-4" /> رجوع
             </Button>
           )}
-          <h1 className="text-xl font-bold">{editingOrderId ? `تعديل فاتورة #${data.invoiceNumber}` : "إضافة فاتورة يدوية"}</h1>
-          <div className="flex gap-2 flex-wrap">
+          <h1 className="text-xl font-bold">
+            {viewOnly ? `عرض فاتورة #${data.invoiceNumber}` : editingOrderId ? `تعديل فاتورة #${data.invoiceNumber}` : "إضافة فاتورة يدوية"}
+          </h1>
+          <div className="flex gap-2 flex-wrap items-center">
+            <Button variant="outline" size="sm" onClick={() => navigateInvoice("prev")} title="الفاتورة السابقة">
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigateInvoice("next")} title="الفاتورة التالية">
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={newInvoice} title="فاتورة جديدة">
+              <FilePlus className="ml-1 h-4 w-4" /> جديدة
+            </Button>
+            <Button variant="outline" onClick={printOnly}>
+              <Printer className="ml-2 h-4 w-4" /> طباعة
+            </Button>
             <Button variant="outline" onClick={() => downloadInvoicePng(`invoice-${data.invoiceNumber || "draft"}`)}>
               <Download className="ml-2 h-4 w-4" /> حفظ كصورة
             </Button>
-            <Button onClick={() => save(false)} disabled={saving}>
-              <Save className="ml-2 h-4 w-4" /> حفظ
-            </Button>
-            <Button onClick={() => save(true)} disabled={saving} variant="default">
-              <Printer className="ml-2 h-4 w-4" /> حفظ وطباعة
-            </Button>
+            {viewOnly ? (
+              <Button onClick={() => setViewOnly(false)} variant="default">
+                <Edit2 className="ml-2 h-4 w-4" /> تعديل
+              </Button>
+            ) : (
+              <>
+                <Button onClick={() => save(false)} disabled={saving}>
+                  <Save className="ml-2 h-4 w-4" /> حفظ
+                </Button>
+                <Button onClick={() => save(true)} disabled={saving} variant="default">
+                  <Printer className="ml-2 h-4 w-4" /> حفظ وطباعة
+                </Button>
+              </>
+            )}
             <Button variant="destructive" onClick={logout}>
               <LogOut className="ml-2 h-4 w-4" /> تسجيل خروج
             </Button>
