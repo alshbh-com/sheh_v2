@@ -467,6 +467,53 @@ const ManualInvoice = () => {
     }
   };
 
+  const navigateInvoice = async (dir: "prev" | "next") => {
+    const cur = (data.invoiceNumber || "").trim();
+    if (!cur) return;
+    const op = dir === "prev" ? "lt" : "gt";
+    const asc = dir === "next";
+    try {
+      const { data: rows } = await (supabase as any)
+        .from("orders")
+        .select("invoice_number, order_number")
+        .not("order_number", "is", null)
+        .filter("order_number", op, cur)
+        .order("order_number", { ascending: asc })
+        .limit(1);
+      if (!rows || !rows.length) {
+        toast({ title: "لا توجد فاتورة", description: dir === "prev" ? "لا توجد فاتورة سابقة" : "لا توجد فاتورة لاحقة" });
+        return;
+      }
+      const num = String(rows[0].invoice_number || rows[0].order_number);
+      await handleInvoiceNumberBlur(num);
+    } catch (e: any) {
+      console.error("navigateInvoice failed", e);
+    }
+  };
+
+  const newInvoice = async () => {
+    setEditingOrderId(null);
+    setViewOnly(false);
+    let next = "";
+    try { next = await getNextInvoiceNumber(); } catch {}
+    setData({
+      invoiceNumber: next,
+      date: todayStr(),
+      customerName: "", customerPhone: "", customerAddress: "",
+      governorate: "",
+      accountName: currentUsername || "",
+      paymentTiming: "after",
+      pageCode: "", extraNumber: "",
+      notes: "",
+      shipping: 0, lines: [emptyLine(), emptyLine()],
+    });
+    setScratch("");
+  };
+
+  const printOnly = () => {
+    window.print();
+  };
+
   return (
     <div className="min-h-screen bg-background py-6" dir="rtl">
       <div className="max-w-4xl mx-auto px-4">
