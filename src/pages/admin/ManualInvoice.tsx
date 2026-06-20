@@ -599,30 +599,12 @@ const ManualInvoice = () => {
         {editingOrderId && (
           <Card className="no-print p-3 mb-3 bg-amber-50 border-amber-300 flex items-center justify-between">
             <div className="text-sm text-amber-800 font-bold">
-              ⚠ وضع التعديل: تقوم بتعديل فاتورة موجودة (#{data.invoiceNumber}). اضغط حفظ لتطبيق التغييرات.
+              {viewOnly
+                ? `👁 وضع العرض: فاتورة #${data.invoiceNumber} — اضغط "تعديل" للسماح بالتعديل.`
+                : `⚠ وضع التعديل: تقوم بتعديل فاتورة موجودة (#${data.invoiceNumber}). اضغط حفظ لتطبيق التغييرات.`}
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={async () => {
-                setEditingOrderId(null);
-                try {
-                  const next = await getNextInvoiceNumber();
-                  setData({
-                    invoiceNumber: next,
-                    date: todayStr(),
-                    customerName: "", customerPhone: "", customerAddress: "",
-                    governorate: "",
-                    accountName: currentUsername || "",
-                    paymentTiming: "after",
-                    pageCode: "", extraNumber: "",
-                    notes: "",
-                    shipping: 0, lines: [emptyLine(), emptyLine()],
-                  });
-                } catch {}
-              }}
-            >
-              إلغاء التعديل
+            <Button size="sm" variant="outline" onClick={newInvoice}>
+              إلغاء
             </Button>
           </Card>
         )}
