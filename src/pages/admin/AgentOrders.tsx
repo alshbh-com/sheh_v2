@@ -2249,18 +2249,13 @@ const AgentOrders = () => {
                         </div>
                         <div>
                           <Label>إضافة الدفعة ليوم</Label>
-                          <Select value={paymentDate} onValueChange={setPaymentDate}>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="اختر التاريخ" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {paymentDateOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Input
+                            type="date"
+                            value={paymentDate}
+                            max={today}
+                            onChange={(e) => setPaymentDate(e.target.value || today)}
+                            className="w-full"
+                          />
                         </div>
                         <div>
                           <Label>الخزنة (إجباري)</Label>
