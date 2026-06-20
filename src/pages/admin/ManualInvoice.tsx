@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, Printer, Save, Download, LogOut } from "lucide-react";
+import { ArrowRight, Printer, Save, Download, LogOut, ChevronRight, ChevronLeft, Edit2, FilePlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import InvoiceTemplate, { InvoiceData, InvoiceLine } from "@/components/admin/InvoiceTemplate";
@@ -53,6 +53,7 @@ const ManualInvoice = () => {
   const [governorates, setGovernorates] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [viewOnly, setViewOnly] = useState(false);
   const [scratch, setScratch] = useState("");
   const [invoiceType, setInvoiceType] = useState<"website" | "wholesale">("website");
   const [data, setData] = useState<InvoiceData>({
@@ -258,6 +259,7 @@ const ManualInvoice = () => {
       }));
       const safeLines = items.length ? items : [emptyLine(), emptyLine()];
       setEditingOrderId(existing.id);
+      setViewOnly(true);
       setData({
         invoiceNumber: String(existing.invoice_number || existing.order_number || v),
         date: existing.created_at ? new Date(existing.created_at).toLocaleDateString("en-GB").replace(/\//g, "/") : todayStr(),
@@ -274,8 +276,8 @@ const ManualInvoice = () => {
         lines: safeLines,
       });
       toast({
-        title: "تم تحميل الفاتورة للتعديل",
-        description: `فاتورة #${existing.invoice_number || existing.order_number || v} — يمكنك التعديل ثم الحفظ.`,
+        title: "تم فتح الفاتورة للعرض",
+        description: `فاتورة #${existing.invoice_number || existing.order_number || v} — اضغط "تعديل" للتعديل.`,
       });
     } catch (e: any) {
       console.error("invoice lookup failed", e);
@@ -306,6 +308,10 @@ const ManualInvoice = () => {
   };
 
   const save = async (thenPrint = false) => {
+    if (viewOnly) {
+      toast({ title: "وضع العرض", description: "اضغط زر التعديل أولاً للسماح بالحفظ.", variant: "destructive" });
+      return;
+    }
     const err = validate();
     if (err) {
       toast({ title: "تنبيه", description: err, variant: "destructive" });
@@ -444,6 +450,7 @@ const ManualInvoice = () => {
         nextInvoiceNumber = await getNextInvoiceNumber();
       } catch {}
       setEditingOrderId(null);
+      setViewOnly(false);
       setData({
         invoiceNumber: nextInvoiceNumber,
         date: todayStr(),
@@ -464,6 +471,53 @@ const ManualInvoice = () => {
     }
   };
 
+  const navigateInvoice = async (dir: "prev" | "next") => {
+    const cur = (data.invoiceNumber || "").trim();
+    if (!cur) return;
+    const op = dir === "prev" ? "lt" : "gt";
+    const asc = dir === "next";
+    try {
+      const { data: rows } = await (supabase as any)
+        .from("orders")
+        .select("invoice_number, order_number")
+        .not("order_number", "is", null)
+        .filter("order_number", op, cur)
+        .order("order_number", { ascending: asc })
+        .limit(1);
+      if (!rows || !rows.length) {
+        toast({ title: "لا توجد فاتورة", description: dir === "prev" ? "لا توجد فاتورة سابقة" : "لا توجد فاتورة لاحقة" });
+        return;
+      }
+      const num = String(rows[0].invoice_number || rows[0].order_number);
+      await handleInvoiceNumberBlur(num);
+    } catch (e: any) {
+      console.error("navigateInvoice failed", e);
+    }
+  };
+
+  const newInvoice = async () => {
+    setEditingOrderId(null);
+    setViewOnly(false);
+    let next = "";
+    try { next = await getNextInvoiceNumber(); } catch {}
+    setData({
+      invoiceNumber: next,
+      date: todayStr(),
+      customerName: "", customerPhone: "", customerAddress: "",
+      governorate: "",
+      accountName: currentUsername || "",
+      paymentTiming: "after",
+      pageCode: "", extraNumber: "",
+      notes: "",
+      shipping: 0, lines: [emptyLine(), emptyLine()],
+    });
+    setScratch("");
+  };
+
+  const printOnly = () => {
+    window.print();
+  };
+
   return (
     <div className="min-h-screen bg-background py-6" dir="rtl">
       <div className="max-w-4xl mx-auto px-4">
@@ -477,17 +531,39 @@ const ManualInvoice = () => {
               <ArrowRight className="ml-2 h-4 w-4" /> رجوع
             </Button>
           )}
-          <h1 className="text-xl font-bold">{editingOrderId ? `تعديل فاتورة #${data.invoiceNumber}` : "إضافة فاتورة يدوية"}</h1>
-          <div className="flex gap-2 flex-wrap">
+          <h1 className="text-xl font-bold">
+            {viewOnly ? `عرض فاتورة #${data.invoiceNumber}` : editingOrderId ? `تعديل فاتورة #${data.invoiceNumber}` : "إضافة فاتورة يدوية"}
+          </h1>
+          <div className="flex gap-2 flex-wrap items-center">
+            <Button variant="outline" size="sm" onClick={() => navigateInvoice("prev")} title="الفاتورة السابقة">
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigateInvoice("next")} title="الفاتورة التالية">
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={newInvoice} title="فاتورة جديدة">
+              <FilePlus className="ml-1 h-4 w-4" /> جديدة
+            </Button>
+            <Button variant="outline" onClick={printOnly}>
+              <Printer className="ml-2 h-4 w-4" /> طباعة
+            </Button>
             <Button variant="outline" onClick={() => downloadInvoicePng(`invoice-${data.invoiceNumber || "draft"}`)}>
               <Download className="ml-2 h-4 w-4" /> حفظ كصورة
             </Button>
-            <Button onClick={() => save(false)} disabled={saving}>
-              <Save className="ml-2 h-4 w-4" /> حفظ
-            </Button>
-            <Button onClick={() => save(true)} disabled={saving} variant="default">
-              <Printer className="ml-2 h-4 w-4" /> حفظ وطباعة
-            </Button>
+            {viewOnly ? (
+              <Button onClick={() => setViewOnly(false)} variant="default">
+                <Edit2 className="ml-2 h-4 w-4" /> تعديل
+              </Button>
+            ) : (
+              <>
+                <Button onClick={() => save(false)} disabled={saving}>
+                  <Save className="ml-2 h-4 w-4" /> حفظ
+                </Button>
+                <Button onClick={() => save(true)} disabled={saving} variant="default">
+                  <Printer className="ml-2 h-4 w-4" /> حفظ وطباعة
+                </Button>
+              </>
+            )}
             <Button variant="destructive" onClick={logout}>
               <LogOut className="ml-2 h-4 w-4" /> تسجيل خروج
             </Button>
@@ -527,30 +603,12 @@ const ManualInvoice = () => {
         {editingOrderId && (
           <Card className="no-print p-3 mb-3 bg-amber-50 border-amber-300 flex items-center justify-between">
             <div className="text-sm text-amber-800 font-bold">
-              ⚠ وضع التعديل: تقوم بتعديل فاتورة موجودة (#{data.invoiceNumber}). اضغط حفظ لتطبيق التغييرات.
+              {viewOnly
+                ? `👁 وضع العرض: فاتورة #${data.invoiceNumber} — اضغط "تعديل" للسماح بالتعديل.`
+                : `⚠ وضع التعديل: تقوم بتعديل فاتورة موجودة (#${data.invoiceNumber}). اضغط حفظ لتطبيق التغييرات.`}
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={async () => {
-                setEditingOrderId(null);
-                try {
-                  const next = await getNextInvoiceNumber();
-                  setData({
-                    invoiceNumber: next,
-                    date: todayStr(),
-                    customerName: "", customerPhone: "", customerAddress: "",
-                    governorate: "",
-                    accountName: currentUsername || "",
-                    paymentTiming: "after",
-                    pageCode: "", extraNumber: "",
-                    notes: "",
-                    shipping: 0, lines: [emptyLine(), emptyLine()],
-                  });
-                } catch {}
-              }}
-            >
-              إلغاء التعديل
+            <Button size="sm" variant="outline" onClick={newInvoice}>
+              إلغاء
             </Button>
           </Card>
         )}
@@ -558,7 +616,7 @@ const ManualInvoice = () => {
         <Card className="p-4 bg-muted/30">
           <InvoiceTemplate
             data={data}
-            editable
+            editable={!viewOnly}
             onChange={setData}
             onCodeBlur={handleCodeBlur}
             onInvoiceNumberBlur={handleInvoiceNumberBlur}
