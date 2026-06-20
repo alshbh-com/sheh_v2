@@ -612,7 +612,7 @@ const ManualInvoice = () => {
         <Card className="p-4 bg-muted/30">
           <InvoiceTemplate
             data={data}
-            editable
+            editable={!viewOnly}
             onChange={setData}
             onCodeBlur={handleCodeBlur}
             onInvoiceNumberBlur={handleInvoiceNumberBlur}
