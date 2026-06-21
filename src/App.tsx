@@ -34,6 +34,7 @@ import ManualInvoice from "./pages/admin/ManualInvoice";
 import ScannerInvoice from "./pages/admin/ScannerInvoice";
 import Storage from "./pages/admin/Storage";
 import BlockedInvoices from "./pages/admin/BlockedInvoices";
+import SystemBackup from "./pages/admin/SystemBackup";
 import BottomNav from "./components/BottomNav";
 import TopNav from "./components/TopNav";
 import NotFound from "./pages/NotFound";
