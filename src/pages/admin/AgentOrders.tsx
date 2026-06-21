@@ -2111,30 +2111,31 @@ const AgentOrders = () => {
                                  </AlertDialogFooter>
                                </AlertDialogContent>
                              </AlertDialog>
-                             <AlertDialog>
-                               <AlertDialogTrigger asChild>
-                                 <Button
-                                   variant="destructive"
-                                   size="sm"
-                                 >
-                                   <Trash2 className="h-4 w-4" />
-                                 </Button>
-                               </AlertDialogTrigger>
-                               <AlertDialogContent>
-                                 <AlertDialogHeader>
-                                   <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
-                                   <AlertDialogDescription>
-                                     هل أنت متأكد من حذف الأوردر؟ سيتم حذف جميع البيانات المرتبطة به.
-                                   </AlertDialogDescription>
-                                 </AlertDialogHeader>
-                                 <AlertDialogFooter>
-                                   <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                                   <AlertDialogAction onClick={() => deleteOrderMutation.mutate(order.id)}>
-                                     حذف
-                                   </AlertDialogAction>
-                                 </AlertDialogFooter>
-                               </AlertDialogContent>
-                             </AlertDialog>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    title="حذف من تاريخ المندوب (لا يحذف الفاتورة)"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>حذف من تاريخ المندوب</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      سيتم إزالة الأوردر من تاريخ هذا المندوب فقط، والفاتورة ستبقى محفوظة في النظام.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => unassignAgentMutation.mutate(order.id)}>
+                                      حذف من المندوب
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                              <RescheduleOrderDialog order={order} />
                              <AlertDialog>
                                <AlertDialogTrigger asChild>
