@@ -83,6 +83,7 @@ const App = () => (
                 <Route path="/admin/scanner-invoice" element={<AdminRoute><ScannerInvoice /></AdminRoute>} />
                 <Route path="/admin/storage" element={<AdminRoute><Storage /></AdminRoute>} />
                 <Route path="/admin/blocked-invoices" element={<AdminRoute><BlockedInvoices /></AdminRoute>} />
+                <Route path="/admin/system-backup" element={<AdminRoute><SystemBackup /></AdminRoute>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
