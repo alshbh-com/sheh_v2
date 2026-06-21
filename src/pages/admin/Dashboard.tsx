@@ -19,7 +19,8 @@ import {
   Building2,
   ScanLine,
   Lock,
-  Ban
+  Ban,
+  Database
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import SearchBar from "@/components/admin/SearchBar";
