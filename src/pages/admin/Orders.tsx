@@ -356,20 +356,26 @@ const Orders = () => {
         .in("order_number", orderNumbersAsStr);
       
       if (fetchError) throw fetchError;
+
+      const { data: govs } = await supabase.from("governorates").select("id, name, shipping_cost");
+      const govList = govs || governorates || [];
       
-      // Assign each order with its own customer shipping cost (fallback: governorate)
+      // Assign each order with shipping based on governorate (fallback to customer shipping)
       for (const orderToAssign of ordersToAssign) {
         let finalShippingCost = shippingCost;
         if (shippingCost === 0) {
-          const orderShipping = parseFloat(orderToAssign.shipping_cost?.toString() || "0");
-          if (orderShipping > 0) {
-            finalShippingCost = orderShipping;
-          } else if (orderToAssign.governorate_id) {
-            const gov = governorates?.find(g => g.id === orderToAssign.governorate_id);
-            if (gov) finalShippingCost = parseFloat(gov.shipping_cost?.toString() || "0");
-          } else if ((orderToAssign as any).governorate) {
-            const gov = governorates?.find(g => g.name === (orderToAssign as any).governorate);
-            if (gov) finalShippingCost = parseFloat(gov.shipping_cost?.toString() || "0");
+          let gov: any = null;
+          if (orderToAssign.governorate_id) {
+            gov = govList.find((g: any) => g.id === orderToAssign.governorate_id);
+          }
+          if (!gov && (orderToAssign as any).governorate) {
+            gov = govList.find((g: any) => g.name === (orderToAssign as any).governorate);
+          }
+          if (gov) {
+            finalShippingCost = parseFloat(gov.shipping_cost?.toString() || "0");
+          } else {
+            const orderShipping = parseFloat(orderToAssign.shipping_cost?.toString() || "0");
+            if (orderShipping > 0) finalShippingCost = orderShipping;
           }
         }
         
