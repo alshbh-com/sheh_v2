@@ -296,26 +296,30 @@ const Orders = () => {
 
   const bulkAssignMutation = useMutation({
     mutationFn: async ({ orderIds, agentId, shippingCost }: { orderIds: string[]; agentId: string; shippingCost: number }) => {
-      // Get orders with their governorate to auto-set shipping if not specified
+      // Fetch governorates fresh to make sure we have them
+      const { data: govs } = await supabase.from("governorates").select("id, name, shipping_cost");
+      const govList = govs || governorates || [];
       for (const orderId of orderIds) {
         const order = orders?.find(o => o.id === orderId);
         let finalShippingCost = shippingCost;
-        
-        // Default agent_shipping_cost to the order's customer shipping (from the manual invoice)
+
+        // Default agent_shipping_cost based on governorate first (then customer shipping fallback)
         if (shippingCost === 0) {
-          const orderShipping = parseFloat(order?.shipping_cost?.toString() || "0");
-          if (orderShipping > 0) {
-            finalShippingCost = orderShipping;
-          } else if (order?.governorate_id) {
-            const gov = governorates?.find(g => g.id === order.governorate_id);
-            if (gov) finalShippingCost = parseFloat(gov.shipping_cost?.toString() || "0");
-          } else if ((order as any)?.governorate) {
-            // Fallback: lookup by governorate name (manual orders may not have governorate_id)
-            const gov = governorates?.find(g => g.name === (order as any).governorate);
-            if (gov) finalShippingCost = parseFloat(gov.shipping_cost?.toString() || "0");
+          let gov: any = null;
+          if (order?.governorate_id) {
+            gov = govList.find((g: any) => g.id === order.governorate_id);
+          }
+          if (!gov && (order as any)?.governorate) {
+            gov = govList.find((g: any) => g.name === (order as any).governorate);
+          }
+          if (gov) {
+            finalShippingCost = parseFloat(gov.shipping_cost?.toString() || "0");
+          } else {
+            const orderShipping = parseFloat(order?.shipping_cost?.toString() || "0");
+            if (orderShipping > 0) finalShippingCost = orderShipping;
           }
         }
-        
+
         const { error } = await supabase
           .from("orders")
           .update({ 
