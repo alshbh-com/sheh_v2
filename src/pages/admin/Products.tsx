@@ -67,7 +67,8 @@ const Products = () => {
       const { data, error } = await supabase
         .from("products")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(0, 9999);
       if (error) throw error;
       return data;
     },
