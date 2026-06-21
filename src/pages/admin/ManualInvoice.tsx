@@ -196,7 +196,9 @@ const ManualInvoice = () => {
   const findExistingOrder = async (code: string) => {
     const value = code.trim();
     if (!value) return null;
-    const fields = ["invoice_number", "order_number", "manual_code", "tracking_code"];
+    // Only match the actual invoice number / order number — never manual_code (page code)
+    // or tracking_code, to prevent typing a short number from loading a different invoice.
+    const fields = ["invoice_number", "order_number"];
     for (const f of fields) {
       const { data: rows } = await (supabase as any)
         .from("orders")
