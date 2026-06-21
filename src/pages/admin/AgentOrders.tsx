@@ -1703,18 +1703,11 @@ const AgentOrders = () => {
               )}
             </div>
             <div className="mt-4 space-y-4">
-              <Select value={selectedAgentId} onValueChange={setSelectedAgentId}>
-                <SelectTrigger className="w-64">
-                  <SelectValue placeholder="اختر مندوب" />
-                </SelectTrigger>
-                <SelectContent>
-                  {agents?.map((agent) => (
-                    <SelectItem key={agent.id} value={agent.id}>
-                      {agent.name} - {agent.serial_number}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <AgentSearchableSelect
+                agents={agents || []}
+                value={selectedAgentId}
+                onChange={setSelectedAgentId}
+              />
 
               {selectedAgentId && (
                 <>
