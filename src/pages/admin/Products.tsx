@@ -536,12 +536,16 @@ const Products = () => {
             </div>
             {(() => {
               const q = normalizeProductLookup(searchQuery);
+              const qDigits = q.replace(/\D/g, "");
               const filteredProducts = !q
                 ? products
                 : products?.filter((p: any) =>
                     [p.name, p.code, p.barcode, p.wholesale_code, p.description]
                       .filter(Boolean)
-                      .some((v: string) => normalizeProductLookup(v).includes(q))
+                      .some((v: string) => {
+                        const value = normalizeProductLookup(v);
+                        return value.includes(q) || (!!qDigits && value.includes(qDigits));
+                      })
                   );
               return !filteredProducts || filteredProducts.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">{q ? "لا توجد نتائج مطابقة" : "لا توجد منتجات"}</p>
