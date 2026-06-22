@@ -19,6 +19,7 @@ import * as XLSX from 'xlsx';
 import { formatOrderItems, formatSizesDisplay } from "@/lib/formatOrderItems";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { printMpInvoices } from "@/lib/printMpInvoices";
+import { fetchProductsPaged } from "@/lib/products";
 
 const Orders = () => {
   const navigate = useNavigate();
@@ -284,13 +285,7 @@ const Orders = () => {
   const { data: productsList } = useQuery({
     queryKey: ["products-for-manual-order"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id, name, price, stock")
-        .eq("is_active", true)
-        .order("name");
-      if (error) throw error;
-      return data || [];
+      return fetchProductsPaged({ select: "id, name, price, stock", activeOnly: true, orderBy: "name", ascending: true });
     },
   });
 
