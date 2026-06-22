@@ -46,10 +46,11 @@ export const fetchProductsPaged = async ({
 };
 
 export const findProductByCode = async (raw: string, select = PRODUCT_SELECT) => {
+  const original = String(raw ?? "").trim();
   const value = normalizeProductLookup(raw);
   if (!value) return null;
   const digitsOnly = value.replace(/\D/g, "");
-  const candidates = Array.from(new Set([value, digitsOnly].filter(Boolean)));
+  const candidates = Array.from(new Set([original, value, digitsOnly].filter(Boolean)));
 
   const fields = ["wholesale_code", "code", "barcode"];
   for (const candidate of candidates) {
