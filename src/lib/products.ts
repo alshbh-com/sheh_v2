@@ -26,7 +26,7 @@ export const fetchProductsPaged = async ({
   const all: any[] = [];
 
   for (let from = 0; ; from += pageSize) {
-    let query = supabase
+    let query = (supabase as any)
       .from("products")
       .select(select)
       .order(orderBy, { ascending })
@@ -51,7 +51,7 @@ export const findProductByCode = async (raw: string, select = PRODUCT_SELECT) =>
 
   const fields = ["wholesale_code", "code", "barcode"];
   for (const field of fields) {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("products")
       .select(select)
       .eq(field, value)
