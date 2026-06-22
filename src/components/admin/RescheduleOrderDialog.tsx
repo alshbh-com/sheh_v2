@@ -3,8 +3,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 
@@ -173,14 +173,18 @@ const RescheduleOrderDialog = ({ order, onSuccess }: RescheduleOrderDialogProps)
 
           <div>
             <Label className="mb-2 block">اختر التاريخ الجديد</Label>
-            <Input
-              type="date"
-              value={selectedDate}
-              min={orderDate}
-              max={today}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full"
-            />
+            <Select value={selectedDate} onValueChange={setSelectedDate}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="اختر من تاريخ التعيين لليوم" />
+              </SelectTrigger>
+              <SelectContent>
+                {dateOptions.map((date) => (
+                  <SelectItem key={date.value} value={date.value}>
+                    {date.label} - {date.value}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
 

@@ -58,7 +58,7 @@ export const useScanSession = () => {
       if (!code || !sessionId) return;
       setLoading(true);
 
-      // try parse order_number, otherwise tracking_code or manual_code
+      // Scan only invoice/order/tracking numbers. Page code (manual_code) must not load orders.
       const num = parseInt(code.replace(/[^0-9]/g, ''), 10);
       const trackMatch = code.toUpperCase();
 
@@ -70,7 +70,7 @@ export const useScanSession = () => {
           agent:delivery_agents(name),
           gov:governorates(name)
         `)
-        .or(`tracking_code.eq.${trackMatch},manual_code.eq.${code}${!isNaN(num) ? `,order_number.eq.${num}` : ''}`)
+        .or(`tracking_code.eq.${trackMatch},invoice_number.eq.${code}${!isNaN(num) ? `,order_number.eq.${num}` : ''}`)
         .limit(1)
         .maybeSingle();
 

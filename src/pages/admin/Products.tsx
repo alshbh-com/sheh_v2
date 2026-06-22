@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { fetchProductsPaged, normalizeProductLookup } from "@/lib/products";
 
 const Products = () => {
   const navigate = useNavigate();
@@ -64,13 +65,7 @@ const Products = () => {
   const { data: products, isLoading } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .range(0, 9999);
-      if (error) throw error;
-      return data;
+      return fetchProductsPaged({ select: "*", orderBy: "created_at", ascending: false });
     },
   });
 
@@ -540,13 +535,17 @@ const Products = () => {
               )}
             </div>
             {(() => {
-              const q = searchQuery.trim().toLowerCase();
+              const q = normalizeProductLookup(searchQuery);
+              const qDigits = q.replace(/\D/g, "");
               const filteredProducts = !q
                 ? products
                 : products?.filter((p: any) =>
                     [p.name, p.code, p.barcode, p.wholesale_code, p.description]
                       .filter(Boolean)
-                      .some((v: string) => String(v).toLowerCase().includes(q))
+                      .some((v: string) => {
+                        const value = normalizeProductLookup(v);
+                        return value.includes(q) || (!!qDigits && value.includes(qDigits));
+                      })
                   );
               return !filteredProducts || filteredProducts.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">{q ? "لا توجد نتائج مطابقة" : "لا توجد منتجات"}</p>

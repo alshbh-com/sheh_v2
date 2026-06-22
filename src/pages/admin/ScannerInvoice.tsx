@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { PRODUCT_SELECT, fetchProductsPaged, findProductByCode, normalizeProductLookup } from "@/lib/products";
 
 type ScannedItem = {
   product_id: string;
@@ -55,12 +56,8 @@ const ScannerInvoice = () => {
 
   useEffect(() => {
     (async () => {
-      const [{ data: ps }, { data: ags }] = await Promise.all([
-        supabase
-          .from("products")
-          .select("id, code, barcode, name, color, size, stock, quantity, price, sale_price")
-          .eq("is_active", true)
-          .limit(5000),
+      const [ps, { data: ags }] = await Promise.all([
+        fetchProductsPaged({ select: PRODUCT_SELECT, orderBy: "created_at", ascending: false }),
         supabase
           .from("delivery_agents")
           .select("id, name, phone")
@@ -76,17 +73,22 @@ const ScannerInvoice = () => {
   const productIndex = useMemo(() => {
     const m = new Map<string, any>();
     products.forEach((p) => {
-      if (p.code) m.set(String(p.code).trim().toLowerCase(), p);
-      if (p.barcode) m.set(String(p.barcode).trim().toLowerCase(), p);
+      if (p.code) m.set(normalizeProductLookup(p.code), p);
+      if (p.barcode) m.set(normalizeProductLookup(p.barcode), p);
+      if (p.wholesale_code) m.set(normalizeProductLookup(p.wholesale_code), p);
     });
     return m;
   }, [products]);
 
   const addByCode = useCallback(
-    (raw: string) => {
-      const key = raw.trim().toLowerCase();
+    async (raw: string) => {
+      const key = normalizeProductLookup(raw);
       if (!key) return;
-      const p = productIndex.get(key);
+      let p = productIndex.get(key);
+      if (!p) {
+        const match = await findProductByCode(key, PRODUCT_SELECT);
+        p = match?.product;
+      }
       if (!p) {
         toast({ title: "منتج غير موجود", description: raw, variant: "destructive" });
         return;

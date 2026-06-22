@@ -1089,89 +1089,13 @@ const AgentOrders = () => {
     },
   });
 
-  const deleteOrderMutation = useMutation({
-    mutationFn: async (orderId: string) => {
-      // First, get the order details to check agent assignment
-      const { data: order, error: orderFetchError } = await supabase
-        .from("orders")
-        .select("delivery_agent_id, total_amount, shipping_cost, agent_shipping_cost")
-        .eq("id", orderId)
-        .maybeSingle();
-      
-      if (orderFetchError) throw orderFetchError;
-
-      // Delete agent_payments related to this order
-      await supabase
-        .from("agent_payments")
-        .delete()
-        .eq("order_id", orderId);
-
-      // Delete returns related to this order
-      await supabase
-        .from("returns")
-        .delete()
-        .eq("order_id", orderId);
-
-      // Delete order items
-      const { error: itemsError } = await supabase
-        .from("order_items")
-        .delete()
-        .eq("order_id", orderId);
-      
-      if (itemsError) throw itemsError;
-
-      // Update agent's total_owed if agent was assigned
-      if (order && order.delivery_agent_id) {
-        const owedAmount = getProductsAmount(order) + 
-                          parseFloat(order.shipping_cost?.toString() || "0") - 
-                          parseFloat(order.agent_shipping_cost?.toString() || "0");
-        
-        // Get current total_owed
-        const { data: agentData, error: fetchError } = await supabase
-          .from("delivery_agents")
-          .select("total_owed")
-          .eq("id", order.delivery_agent_id)
-          .maybeSingle();
-        
-        if (!fetchError && agentData) {
-          const currentOwed = parseFloat(agentData.total_owed?.toString() || "0");
-          const newOwed = currentOwed - owedAmount;
-          
-          await supabase
-            .from("delivery_agents")
-            .update({ total_owed: newOwed })
-            .eq("id", order.delivery_agent_id);
-        }
-      }
-
-      // Delete the order
-      const { error } = await supabase
-        .from("orders")
-        .delete()
-        .eq("id", orderId);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["agent-orders"] });
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-      queryClient.invalidateQueries({ queryKey: ["all-orders"] });
-      queryClient.invalidateQueries({ queryKey: ["delivery_agents"] });
-      queryClient.invalidateQueries({ queryKey: ["agent_payments"] });
-      toast.success("تم حذف الأوردر");
-    },
-    onError: (error) => {
-      console.error("Error deleting order:", error);
-      toast.error("حدث خطأ أثناء حذف الأوردر");
-    },
-  });
-
   const unassignAgentMutation = useMutation({
     mutationFn: async (orderId: string) => {
       const { error } = await supabase
         .from("orders")
         .update({ 
           delivery_agent_id: null,
+          assigned_at: null,
           status: 'pending'
         })
         .eq("id", orderId);
