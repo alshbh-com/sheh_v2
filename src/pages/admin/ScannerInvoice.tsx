@@ -56,7 +56,7 @@ const ScannerInvoice = () => {
 
   useEffect(() => {
     (async () => {
-      const [{ data: ps }, { data: ags }] = await Promise.all([
+      const [ps, { data: ags }] = await Promise.all([
         fetchProductsPaged({ select: PRODUCT_SELECT, orderBy: "created_at", ascending: false }),
         supabase
           .from("delivery_agents")
