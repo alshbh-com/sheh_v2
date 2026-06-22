@@ -11,6 +11,7 @@ import { toast } from "@/components/ui/use-toast";
 import InvoiceTemplate, { InvoiceData, InvoiceLine } from "@/components/admin/InvoiceTemplate";
 import { printInvoiceTemplate } from "@/lib/printInvoiceTemplate";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { PRODUCT_SELECT, fetchProductsPaged, findProductByCode, normalizeProductLookup } from "@/lib/products";
 
 const emptyLine = (): InvoiceLine => ({ code: "", name: "", color: "", size: "", qty: 1, price: 0 });
 
@@ -82,11 +83,7 @@ const ManualInvoice = () => {
   useEffect(() => {
     (async () => {
       const [{ data: ps }, { data: gs }] = await Promise.all([
-        supabase
-          .from("products")
-          .select("id, code, barcode, name, price, sale_price, color, size, wholesale_price, wholesale_code")
-          .eq("is_active", true)
-          .limit(5000),
+        fetchProductsPaged({ select: PRODUCT_SELECT, orderBy: "created_at", ascending: false }),
         supabase.from("governorates").select("id, name, shipping_cost").order("name"),
       ]);
       setProducts(ps || []);
@@ -116,15 +113,15 @@ const ManualInvoice = () => {
     const byBarcode = new Map<string, any>();
     const byWholesale = new Map<string, any>();
     products.forEach((p) => {
-      if (p.code) byCode.set(String(p.code).trim().toLowerCase(), p);
-      if (p.barcode) byBarcode.set(String(p.barcode).trim().toLowerCase(), p);
-      if (p.wholesale_code) byWholesale.set(String(p.wholesale_code).trim().toLowerCase(), p);
+      if (p.code) byCode.set(normalizeProductLookup(p.code), p);
+      if (p.barcode) byBarcode.set(normalizeProductLookup(p.barcode), p);
+      if (p.wholesale_code) byWholesale.set(normalizeProductLookup(p.wholesale_code), p);
     });
     return { byCode, byBarcode, byWholesale };
   }, [products]);
 
   const findProduct = (raw: string) => {
-    const key = raw.trim().toLowerCase();
+    const key = normalizeProductLookup(raw);
     if (!key) return { p: null as any, isWholesale: false };
     if (productIndex.byWholesale.has(key)) {
       return { p: productIndex.byWholesale.get(key), isWholesale: true };
@@ -134,22 +131,10 @@ const ManualInvoice = () => {
 
   // Fallback: search the DB directly (handles products beyond local cache)
   const findProductDb = async (raw: string): Promise<{ p: any; isWholesale: boolean }> => {
-    const value = raw.trim();
+    const value = normalizeProductLookup(raw);
     if (!value) return { p: null, isWholesale: false };
-    // Try wholesale_code first
-    const { data: wRows } = await (supabase as any)
-      .from("products")
-      .select("id, code, barcode, name, price, sale_price, color, size, wholesale_price, wholesale_code")
-      .eq("wholesale_code", value)
-      .limit(1);
-    if (wRows && wRows[0]) return { p: wRows[0], isWholesale: true };
-    // Then code, then barcode
-    const { data: cRows } = await (supabase as any)
-      .from("products")
-      .select("id, code, barcode, name, price, sale_price, color, size, wholesale_price, wholesale_code")
-      .or(`code.eq.${value},barcode.eq.${value}`)
-      .limit(1);
-    if (cRows && cRows[0]) return { p: cRows[0], isWholesale: false };
+    const match = await findProductByCode(value, PRODUCT_SELECT);
+    if (match?.product) return { p: match.product, isWholesale: match.matchedField === "wholesale_code" };
     return { p: null, isWholesale: false };
   };
 
@@ -196,18 +181,14 @@ const ManualInvoice = () => {
   const findExistingOrder = async (code: string) => {
     const value = code.trim();
     if (!value) return null;
-    // Only match the actual invoice number / order number — never manual_code (page code)
-    // or tracking_code, to prevent typing a short number from loading a different invoice.
-    const fields = ["invoice_number", "order_number"];
-    for (const f of fields) {
-      const { data: rows } = await (supabase as any)
-        .from("orders")
-        .select("*, order_items(*)")
-        .eq(f, value)
-        .limit(1);
-      if (rows && rows.length > 0) return rows[0];
-    }
-    return null;
+    // Only match the visible invoice number. Do not match order_number/manual_code/tracking_code,
+    // so typing a small number like 5 never opens a different old order.
+    const { data: rows } = await (supabase as any)
+      .from("orders")
+      .select("*, order_items(*)")
+      .eq("invoice_number", value)
+      .limit(1);
+    return rows?.[0] || null;
   };
 
   const isPhoneBlocked = async (phone: string): Promise<{ blocked: boolean; reason?: string | null }> => {
