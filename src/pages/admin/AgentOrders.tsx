@@ -1095,6 +1095,7 @@ const AgentOrders = () => {
         .from("orders")
         .update({ 
           delivery_agent_id: null,
+          assigned_at: null,
           status: 'pending'
         })
         .eq("id", orderId);
