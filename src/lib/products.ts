@@ -48,16 +48,20 @@ export const fetchProductsPaged = async ({
 export const findProductByCode = async (raw: string, select = PRODUCT_SELECT) => {
   const value = normalizeProductLookup(raw);
   if (!value) return null;
+  const digitsOnly = value.replace(/\D/g, "");
+  const candidates = Array.from(new Set([value, digitsOnly].filter(Boolean)));
 
   const fields = ["wholesale_code", "code", "barcode"];
-  for (const field of fields) {
-    const { data, error } = await (supabase as any)
-      .from("products")
-      .select(select)
-      .eq(field, value)
-      .limit(1);
-    if (error) throw error;
-    if (data?.[0]) return { product: data[0], matchedField: field };
+  for (const candidate of candidates) {
+    for (const field of fields) {
+      const { data, error } = await (supabase as any)
+        .from("products")
+        .select(select)
+        .eq(field, candidate)
+        .limit(1);
+      if (error) throw error;
+      if (data?.[0]) return { product: data[0], matchedField: field };
+    }
   }
 
   return null;
