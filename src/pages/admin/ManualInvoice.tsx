@@ -82,7 +82,7 @@ const ManualInvoice = () => {
 
   useEffect(() => {
     (async () => {
-      const [{ data: ps }, { data: gs }] = await Promise.all([
+      const [ps, { data: gs }] = await Promise.all([
         fetchProductsPaged({ select: PRODUCT_SELECT, orderBy: "created_at", ascending: false }),
         supabase.from("governorates").select("id, name, shipping_cost").order("name"),
       ]);
