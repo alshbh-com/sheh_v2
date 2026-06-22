@@ -285,7 +285,7 @@ const Orders = () => {
   const { data: productsList } = useQuery({
     queryKey: ["products-for-manual-order"],
     queryFn: async () => {
-      return fetchProductsPaged({ select: "id, name, price, stock", activeOnly: true, orderBy: "name", ascending: true });
+      return fetchProductsPaged({ select: "id, name, price, stock", orderBy: "name", ascending: true });
     },
   });
 
